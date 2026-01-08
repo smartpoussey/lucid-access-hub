@@ -9,6 +9,7 @@ import { RoleGuard, GuestGuard } from "@/components/auth/RoleGuard";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Register from "./pages/Register";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LeadsManagement from "./pages/admin/LeadsManagement";
 import UsersManagement from "./pages/admin/UsersManagement";
@@ -30,18 +31,19 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<GuestGuard><Login /></GuestGuard>} />
             <Route path="/signup" element={<GuestGuard><Signup /></GuestGuard>} />
+            <Route path="/register" element={<GuestGuard><Register /></GuestGuard>} />
             
             {/* Admin Routes */}
-            <Route path="/admin" element={<RoleGuard allowedRoles={['ADMIN']}><AdminDashboard /></RoleGuard>} />
-            <Route path="/admin/leads" element={<RoleGuard allowedRoles={['ADMIN']}><LeadsManagement /></RoleGuard>} />
-            <Route path="/admin/users" element={<RoleGuard allowedRoles={['ADMIN']}><UsersManagement /></RoleGuard>} />
-            <Route path="/admin/projects" element={<RoleGuard allowedRoles={['ADMIN']}><ProjectsManagement /></RoleGuard>} />
+            <Route path="/admin" element={<RoleGuard allowedRoles={['admin']}><AdminDashboard /></RoleGuard>} />
+            <Route path="/admin/leads" element={<RoleGuard allowedRoles={['admin']}><LeadsManagement /></RoleGuard>} />
+            <Route path="/admin/users" element={<RoleGuard allowedRoles={['admin']}><UsersManagement /></RoleGuard>} />
+            <Route path="/admin/projects" element={<RoleGuard allowedRoles={['admin']}><ProjectsManagement /></RoleGuard>} />
             
             {/* Staff Routes */}
-            <Route path="/staff" element={<RoleGuard allowedRoles={['STAFF']}><StaffDashboard /></RoleGuard>} />
+            <Route path="/staff" element={<RoleGuard allowedRoles={['staff']}><StaffDashboard /></RoleGuard>} />
             
             {/* Client Routes */}
-            <Route path="/client" element={<RoleGuard allowedRoles={['CLIENT']}><ClientDashboard /></RoleGuard>} />
+            <Route path="/client" element={<RoleGuard allowedRoles={['client']}><ClientDashboard /></RoleGuard>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

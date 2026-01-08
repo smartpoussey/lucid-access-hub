@@ -38,43 +38,39 @@ export default function UsersManagement() {
   const demoUsers: User[] = [
     {
       userId: '1',
+      username: 'alex_morgan',
       email: 'admin@lucidence.com',
-      name: 'Alex Morgan',
-      role: 'ADMIN',
+      passwordHash: '',
+      role: 'admin',
       status: 'active',
-      avatarUrl: '',
       createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
     },
     {
       userId: '2',
+      username: 'sarah_williams',
       email: 'sarah.staff@lucidence.com',
-      name: 'Sarah Williams',
-      role: 'STAFF',
+      passwordHash: '',
+      role: 'staff',
       status: 'active',
-      avatarUrl: '',
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
     },
     {
       userId: '3',
+      username: 'john_smith',
       email: 'john@bayareamedical.com',
-      name: 'John Smith',
-      role: 'CLIENT',
+      passwordHash: '',
+      role: 'client',
       status: 'active',
-      avatarUrl: '',
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
     },
     {
       userId: '4',
+      username: 'emily_roberts',
       email: 'emily@sunrisewellness.com',
-      name: 'Emily Roberts',
-      role: 'CLIENT',
+      passwordHash: '',
+      role: 'client',
       status: 'pending',
-      avatarUrl: '',
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
     },
   ];
 
@@ -106,7 +102,7 @@ export default function UsersManagement() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (user) =>
-          user.name.toLowerCase().includes(query) ||
+          user.username.toLowerCase().includes(query) ||
           user.email.toLowerCase().includes(query)
       );
     }
@@ -118,22 +114,17 @@ export default function UsersManagement() {
     setFilteredUsers(filtered);
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  const getInitials = (username: string) => {
+    return username.slice(0, 2).toUpperCase();
   };
 
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
-      case 'ADMIN':
+      case 'admin':
         return 'bg-primary/20 text-primary';
-      case 'STAFF':
+      case 'staff':
         return 'bg-accent/20 text-accent';
-      case 'CLIENT':
+      case 'client':
         return 'bg-success/20 text-success';
       default:
         return 'bg-muted text-muted-foreground';
@@ -197,7 +188,7 @@ export default function UsersManagement() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name or email..."
+              placeholder="Search by username or email..."
               className="pl-10 bg-secondary border-border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -210,9 +201,9 @@ export default function UsersManagement() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="ADMIN">Admin</SelectItem>
-              <SelectItem value="STAFF">Staff</SelectItem>
-              <SelectItem value="CLIENT">Client</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="staff">Staff</SelectItem>
+              <SelectItem value="client">Client</SelectItem>
             </SelectContent>
           </Select>
         </motion.div>
@@ -239,13 +230,12 @@ export default function UsersManagement() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={user.avatarUrl} />
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {getInitials(user.name)}
+                          {getInitials(user.username)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-medium text-foreground">{user.name}</h3>
+                        <h3 className="font-medium text-foreground">{user.username}</h3>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                       </div>
                     </div>

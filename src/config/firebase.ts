@@ -1,10 +1,9 @@
 import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
-import type { FirebaseProjectConfig } from '@/types';
 
 // Main Lucidence Authentication Firebase Config
-// Replace these with your actual Firebase config
+// Uses environment variables from .env file
 const mainFirebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "YOUR_API_KEY",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "YOUR_AUTH_DOMAIN",
@@ -26,13 +25,24 @@ export const db: Firestore = getFirestore(mainApp);
 // Store for dynamically initialized client project Firebase apps
 const clientApps: Map<string, FirebaseApp> = new Map();
 
+// Client project Firebase config interface
+export interface ClientFirebaseConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId?: string;
+}
+
 /**
  * Initialize a Firebase app for a specific client project
  * This allows multi-tenant architecture where each client has their own Firebase
  */
 export function initializeClientProjectApp(
   projectId: string, 
-  config: FirebaseProjectConfig
+  config: ClientFirebaseConfig
 ): FirebaseApp {
   // Check if already initialized
   if (clientApps.has(projectId)) {
