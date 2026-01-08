@@ -59,9 +59,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = user?.role === 'ADMIN' 
+  const navItems = user?.role === 'admin' 
     ? adminNavItems 
-    : user?.role === 'STAFF' 
+    : user?.role === 'staff' 
     ? staffNavItems 
     : clientNavItems;
 
@@ -70,13 +70,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     navigate('/');
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  const getInitials = (username: string) => {
+    return username.slice(0, 2).toUpperCase();
   };
 
   return (
@@ -119,14 +114,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-sidebar-accent transition-colors">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src={user?.avatarUrl} />
                   <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-sm">
-                    {user?.name ? getInitials(user.name) : 'U'}
+                    {user?.username ? getInitials(user.username) : 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-sidebar-foreground truncate">
-                    {user?.name}
+                    {user?.username}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {user?.role}
@@ -232,9 +226,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <span className="text-lg font-display font-semibold text-foreground">Lucidence</span>
             </Link>
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.avatarUrl} />
               <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                {user?.name ? getInitials(user.name) : 'U'}
+                {user?.username ? getInitials(user.username) : 'U'}
               </AvatarFallback>
             </Avatar>
           </div>

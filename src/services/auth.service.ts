@@ -1,65 +1,105 @@
 import {
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
   signOut,
-  sendPasswordResetEmail,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { auth, db } from '@/config/firebase';
+import { auth } from '@/config/firebase';
 import type { User, UserRole } from '@/types';
+import { 
+  getUserByUsername, 
+  updateUserLastLogin, 
+  createUser as createUserInFirestore,
+  isUsernameAvailable,
+  isEmailAvailable,
+} from './firestore.service';
 
-const googleProvider = new GoogleAuthProvider();
-
-// Email link action code settings
-const actionCodeSettings = {
-  url: window.location.origin + '/complete-signup',
-  handleCodeInApp: true,
-};
-
-/**
- * Sign in with email and password
- */
-export async function signInWithEmail(email: string, password: string): Promise<User> {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  const userData = await getUserData(userCredential.user.uid);
-  
-  if (!userData) {
-    throw new Error('User data not found');
-  }
-  
-  if (userData.status !== 'active') {
-    await signOut(auth);
-    throw new Error('Your account is not active. Please contact support.');
-  }
-  
-  return userData;
+// Simple hash function for password (in production, use bcrypt on backend)
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
- * Sign in with Google
+ * Verify password against stored hash
  */
-export async function signInWithGoogle(): Promise<User> {
-  const result = await signInWithPopup(auth, googleProvider);
-  const userData = await getUserData(result.user.uid);
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  const hash = await hashPassword(password);
+  return hash === storedHash;
+}
+
+/**
+ * Sign in with username and password (custom auth against Firestore)
+ */
+export async function signInWithCredentials(username: string, password: string): Promise<User> {
+  const user = await getUserByUsername(username);
   
-  if (!userData) {
-    // User authenticated but not in our system
-    await signOut(auth);
-    throw new Error('Account not found. Please contact your administrator.');
+  if (!user) {
+    throw new Error('Invalid username or password');
   }
   
-  if (userData.status !== 'active') {
-    await signOut(auth);
+  const isValidPassword = await verifyPassword(password, user.passwordHash);
+  
+  if (!isValidPassword) {
+    throw new Error('Invalid username or password');
+  }
+  
+  if (user.status !== 'active') {
     throw new Error('Your account is not active. Please contact support.');
   }
   
-  return userData;
+  // Update last login
+  await updateUserLastLogin(user.userId);
+  
+  return user;
+}
+
+/**
+ * Register new user with username, email, and password
+ */
+export async function registerUser(
+  username: string,
+  email: string,
+  password: string
+): Promise<{ userId: string; requiresEmailVerification: boolean }> {
+  // Check if username is available
+  const usernameAvailable = await isUsernameAvailable(username);
+  if (!usernameAvailable) {
+    throw new Error('Username is already taken');
+  }
+  
+  // Check if email is available
+  const emailAvailable = await isEmailAvailable(email);
+  if (!emailAvailable) {
+    throw new Error('Email is already registered');
+  }
+  
+  // Create Firebase Auth user for email verification
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  
+  // Send email verification
+  await sendEmailVerification(userCredential.user);
+  
+  // Hash password for Firestore storage
+  const passwordHash = await hashPassword(password);
+  
+  // Create user in Firestore with pending status until email is verified
+  const userId = await createUserInFirestore({
+    username,
+    email,
+    passwordHash,
+    role: 'client' as UserRole, // Default role for new registrations
+    status: 'pending',
+  });
+  
+  // Sign out from Firebase Auth (we use custom auth)
+  await signOut(auth);
+  
+  return { userId, requiresEmailVerification: true };
 }
 
 /**
@@ -70,96 +110,40 @@ export async function signOutUser(): Promise<void> {
 }
 
 /**
- * Send password setup email link (for first-time users)
+ * Get user data from session storage
  */
-export async function sendPasswordSetupEmail(email: string): Promise<void> {
-  await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-  // Store email for later retrieval
-  window.localStorage.setItem('emailForSignIn', email);
-}
-
-/**
- * Check if current URL is a sign-in email link
- */
-export function isEmailSignInLink(url: string): boolean {
-  return isSignInWithEmailLink(auth, url);
-}
-
-/**
- * Complete sign-in with email link
- */
-export async function completeEmailLinkSignIn(email: string, url: string): Promise<User> {
-  const result = await signInWithEmailLink(auth, email, url);
-  window.localStorage.removeItem('emailForSignIn');
+export function getStoredUser(): User | null {
+  const stored = sessionStorage.getItem('lucidence_user');
+  if (!stored) return null;
   
-  const userData = await getUserData(result.user.uid);
-  if (!userData) {
-    throw new Error('User data not found');
-  }
-  
-  // Update user status to active if pending
-  if (userData.status === 'pending') {
-    await updateDoc(doc(db, 'users', result.user.uid), {
-      status: 'active',
-      updatedAt: new Date(),
-    });
-    userData.status = 'active';
-  }
-  
-  return userData;
-}
-
-/**
- * Send password reset email
- */
-export async function resetPassword(email: string): Promise<void> {
-  await sendPasswordResetEmail(auth, email);
-}
-
-/**
- * Get user data from Firestore
- */
-export async function getUserData(userId: string): Promise<User | null> {
-  const userDoc = await getDoc(doc(db, 'users', userId));
-  
-  if (!userDoc.exists()) {
+  try {
+    const user = JSON.parse(stored);
+    return {
+      ...user,
+      createdAt: new Date(user.createdAt),
+      lastLoginAt: user.lastLoginAt ? new Date(user.lastLoginAt) : undefined,
+    };
+  } catch {
     return null;
   }
-  
-  const data = userDoc.data();
-  return {
-    userId: userDoc.id,
-    email: data.email,
-    name: data.name,
-    role: data.role as UserRole,
-    status: data.status,
-    avatarUrl: data.avatarUrl,
-    createdAt: data.createdAt?.toDate() || new Date(),
-    updatedAt: data.updatedAt?.toDate() || new Date(),
-  };
 }
 
 /**
- * Create user in Firestore (admin use)
+ * Store user in session storage
  */
-export async function createUserRecord(
-  userId: string,
-  email: string,
-  name: string,
-  role: UserRole
-): Promise<void> {
-  await setDoc(doc(db, 'users', userId), {
-    email,
-    name,
-    role,
-    status: 'pending',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+export function storeUser(user: User): void {
+  sessionStorage.setItem('lucidence_user', JSON.stringify(user));
 }
 
 /**
- * Subscribe to auth state changes
+ * Clear stored user
+ */
+export function clearStoredUser(): void {
+  sessionStorage.removeItem('lucidence_user');
+}
+
+/**
+ * Subscribe to auth state changes (for Firebase Auth)
  */
 export function subscribeToAuthState(
   callback: (user: FirebaseUser | null) => void
@@ -173,3 +157,8 @@ export function subscribeToAuthState(
 export function getCurrentFirebaseUser(): FirebaseUser | null {
   return auth.currentUser;
 }
+
+/**
+ * Hash password utility (exported for admin use)
+ */
+export { hashPassword };

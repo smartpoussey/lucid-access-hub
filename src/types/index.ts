@@ -1,110 +1,96 @@
 // User Roles
-export type UserRole = 'ADMIN' | 'STAFF' | 'CLIENT';
+export type UserRole = 'admin' | 'staff' | 'client' | 'lead';
 
 // User Status
 export type UserStatus = 'active' | 'pending' | 'disabled';
 
-// Assignment Status
-export type AssignmentStatus = 'active' | 'inactive' | 'pending';
+// Project Assignment Status
+export type ProjectAssignmentStatus = 'active' | 'paused' | 'completed';
 
-// User interface
-export interface User {
-  userId: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  status: UserStatus;
-  avatarUrl?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Staff Project Role
+export type StaffProjectRole = 'primary' | 'secondary' | 'support';
 
 // Lead interface (pre-registration)
 export interface Lead {
   leadId: string;
   name: string;
   email: string;
-  mobileNumber: string;
-  clinicName: string;
-  address: string;
-  location: string;
-  reasonForContact: string;
-  referralSource: ReferralSource;
-  survey: LeadSurvey;
-  status: 'pending' | 'approved' | 'rejected';
+  phone: string;
+  source: string;
+  country: string;
   createdAt: Date;
-  updatedAt: Date;
 }
 
-export type ReferralSource = 
-  | 'google_search'
-  | 'social_media'
-  | 'referral'
-  | 'advertisement'
-  | 'conference'
-  | 'other';
+// User interface
+export interface User {
+  userId: string;
+  username: string;
+  email: string;
+  passwordHash: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: Date;
+  lastLoginAt?: Date;
+}
 
-export interface LeadSurvey {
-  hasExistingWebsite: boolean;
-  hasChatbot: boolean;
-  hasAIAgent: boolean;
-  hasReceptionist: boolean;
-  hasAutomationTools: boolean;
-  additionalNotes?: string;
+// Client interface
+export interface Client {
+  clientId: string;
+  clientName: string;
+  createdAt: Date;
 }
 
 // Client Project (Multi-tenant)
 export interface ClientProject {
   clientProjectId: string;
   clientId: string;
-  clientProjectName: string;
-  description?: string;
-  firebaseConfig: FirebaseProjectConfig;
-  status: 'active' | 'inactive' | 'setup';
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface FirebaseProjectConfig {
+  projectName: string;
   apiKey: string;
   authDomain: string;
-  projectId: string;
+  firebaseProjectId: string;
   storageBucket: string;
   messagingSenderId: string;
   appId: string;
   measurementId?: string;
+  createdAt: Date;
+}
+
+// Staff interface
+export interface Staff {
+  staffId: string;
+  staffName: string;
+  createdAt: Date;
 }
 
 // Staff-Client Project Mapping
 export interface StaffClientProject {
   staffId: string;
   clientProjectId: string;
-  assignmentStatus: AssignmentStatus;
-  notes?: string;
+  assignmentStatus: ProjectAssignmentStatus;
+  staffRole: StaffProjectRole;
   assignedAt: Date;
+  notes?: string;
 }
 
 // Form Types
 export interface LoginFormData {
-  email: string;
+  username: string;
   password: string;
 }
 
 export interface SignupFormData {
   name: string;
   email: string;
-  mobileNumber: string;
-  clinicName: string;
-  address: string;
-  location: string;
-  reasonForContact: string;
-  referralSource: ReferralSource;
-  hasExistingWebsite: boolean;
-  hasChatbot: boolean;
-  hasAIAgent: boolean;
-  hasReceptionist: boolean;
-  hasAutomationTools: boolean;
-  additionalNotes?: string;
+  phone: string;
+  source: string;
+  country: string;
+}
+
+export interface RegisterFormData {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
 }
 
 // Auth Context Types

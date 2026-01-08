@@ -1,44 +1,9 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Mail, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { LoginForm } from '@/components/auth/LoginForm';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [isResetting, setIsResetting] = useState(false);
-  const { sendPasswordReset } = useAuth();
-  const { toast } = useToast();
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetEmail) return;
-
-    setIsResetting(true);
-    try {
-      await sendPasswordReset(resetEmail);
-      toast({
-        title: 'Password reset email sent',
-        description: 'Check your inbox for further instructions.',
-      });
-      setShowForgotPassword(false);
-    } catch (error: any) {
-      toast({
-        title: 'Failed to send reset email',
-        description: error.message || 'Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding */}
@@ -84,83 +49,31 @@ export default function Login() {
             Back to home
           </Link>
 
-          {showForgotPassword ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              <div>
-                <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
-                  Reset your password
-                </h2>
-                <p className="text-muted-foreground">
-                  Enter your email and we'll send you reset instructions.
-                </p>
-              </div>
+          <div className="mb-8">
+            <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
+              Sign in to your account
+            </h2>
+            <p className="text-muted-foreground">
+              Enter your credentials to access your dashboard.
+            </p>
+          </div>
 
-              <form onSubmit={handlePasswordReset} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="resetEmail">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="resetEmail"
-                      type="email"
-                      placeholder="you@company.com"
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                      className="pl-10 bg-secondary border-border"
-                      required
-                    />
-                  </div>
-                </div>
+          <LoginForm />
 
-                <Button
-                  type="submit"
-                  className="w-full bg-primary text-primary-foreground"
-                  disabled={isResetting}
-                >
-                  {isResetting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    'Send reset email'
-                  )}
-                </Button>
-              </form>
-
-              <button
-                onClick={() => setShowForgotPassword(false)}
-                className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to login
-              </button>
-            </motion.div>
-          ) : (
-            <>
-              <div className="mb-8">
-                <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
-                  Sign in to your account
-                </h2>
-                <p className="text-muted-foreground">
-                  Enter your credentials to access your dashboard.
-                </p>
-              </div>
-
-              <LoginForm onForgotPassword={() => setShowForgotPassword(true)} />
-
-              <p className="mt-8 text-center text-muted-foreground">
-                Don't have an account?{' '}
-                <Link to="/signup" className="text-primary hover:text-primary/80 font-medium transition-colors">
-                  Apply here
-                </Link>
-              </p>
-            </>
-          )}
+          <div className="mt-8 space-y-4 text-center">
+            <p className="text-muted-foreground">
+              Don't have an account?{' '}
+              <Link to="/signup" className="text-primary hover:text-primary/80 font-medium transition-colors">
+                Apply as a lead
+              </Link>
+            </p>
+            <p className="text-muted-foreground">
+              Need to register?{' '}
+              <Link to="/register" className="text-primary hover:text-primary/80 font-medium transition-colors">
+                Create account
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

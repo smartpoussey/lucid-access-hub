@@ -22,53 +22,38 @@ export default function ProjectsManagement() {
     {
       clientProjectId: '1',
       clientId: 'client1',
-      clientProjectName: 'Bay Area Medical - AI Assistant',
-      description: 'Virtual receptionist and patient scheduling system',
-      firebaseConfig: {
-        apiKey: 'demo-key',
-        authDomain: 'project.firebaseapp.com',
-        projectId: 'bay-area-medical-ai',
-        storageBucket: 'project.appspot.com',
-        messagingSenderId: '123456789',
-        appId: '1:123:web:abc',
-      },
-      status: 'active',
+      projectName: 'Bay Area Medical - AI Assistant',
+      apiKey: 'demo-key',
+      authDomain: 'project.firebaseapp.com',
+      firebaseProjectId: 'bay-area-medical-ai',
+      storageBucket: 'project.appspot.com',
+      messagingSenderId: '123456789',
+      appId: '1:123:web:abc',
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
     },
     {
       clientProjectId: '2',
       clientId: 'client2',
-      clientProjectName: 'Pacific Dental - Chatbot',
-      description: 'Patient inquiry and appointment booking chatbot',
-      firebaseConfig: {
-        apiKey: 'demo-key-2',
-        authDomain: 'project2.firebaseapp.com',
-        projectId: 'pacific-dental-chat',
-        storageBucket: 'project2.appspot.com',
-        messagingSenderId: '987654321',
-        appId: '1:987:web:xyz',
-      },
-      status: 'active',
+      projectName: 'Pacific Dental - Chatbot',
+      apiKey: 'demo-key-2',
+      authDomain: 'project2.firebaseapp.com',
+      firebaseProjectId: 'pacific-dental-chat',
+      storageBucket: 'project2.appspot.com',
+      messagingSenderId: '987654321',
+      appId: '1:987:web:xyz',
       createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
     },
     {
       clientProjectId: '3',
       clientId: 'client3',
-      clientProjectName: 'Sunrise Wellness - Portal',
-      description: 'Patient portal with AI-powered health insights',
-      firebaseConfig: {
-        apiKey: '',
-        authDomain: '',
-        projectId: '',
-        storageBucket: '',
-        messagingSenderId: '',
-        appId: '',
-      },
-      status: 'setup',
+      projectName: 'Sunrise Wellness - Portal',
+      apiKey: '',
+      authDomain: '',
+      firebaseProjectId: '',
+      storageBucket: '',
+      messagingSenderId: '',
+      appId: '',
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
     },
   ];
 
@@ -90,8 +75,15 @@ export default function ProjectsManagement() {
   };
 
   const filteredProjects = projects.filter((project) =>
-    project.clientProjectName.toLowerCase().includes(searchQuery.toLowerCase())
+    project.projectName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const getProjectStatus = (project: ClientProject) => {
+    if (!project.apiKey || !project.firebaseProjectId) {
+      return 'setup';
+    }
+    return 'active';
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -173,53 +165,56 @@ export default function ProjectsManagement() {
               No projects found.
             </div>
           ) : (
-            filteredProjects.map((project) => (
-              <Card 
-                key={project.clientProjectId} 
-                className="bg-card border-border hover:border-primary/30 transition-all group"
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-foreground group-hover:text-primary transition-colors">
-                        {project.clientProjectName}
-                      </CardTitle>
-                      <CardDescription className="line-clamp-2">
-                        {project.description || 'No description'}
-                      </CardDescription>
-                    </div>
-                    <Badge className={getStatusColor(project.status)}>
-                      {project.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Activity className="h-4 w-4" />
-                        <span>Active</span>
+            filteredProjects.map((project) => {
+              const status = getProjectStatus(project);
+              return (
+                <Card 
+                  key={project.clientProjectId} 
+                  className="bg-card border-border hover:border-primary/30 transition-all group"
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-foreground group-hover:text-primary transition-colors">
+                          {project.projectName}
+                        </CardTitle>
+                        <CardDescription className="line-clamp-2">
+                          Project ID: {project.firebaseProjectId || 'Not configured'}
+                        </CardDescription>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        <span>2 staff</span>
+                      <Badge className={getStatusColor(status)}>
+                        {status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Activity className="h-4 w-4" />
+                          <span>{status === 'active' ? 'Active' : 'Setup Required'}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          <span>2 staff</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 border-border">
+                          <Settings className="h-4 w-4 mr-1" />
+                          Configure
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 border-border">
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Open
+                        </Button>
                       </div>
                     </div>
-                    
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 border-border">
-                        <Settings className="h-4 w-4 mr-1" />
-                        Configure
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1 border-border">
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Open
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </motion.div>
       </div>

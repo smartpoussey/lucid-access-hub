@@ -10,10 +10,18 @@ import {
   where,
   orderBy,
   Timestamp,
-  QueryConstraint,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import type { Lead, User, ClientProject, StaffClientProject, UserRole, SignupFormData } from '@/types';
+import type { 
+  Lead, 
+  User, 
+  Client,
+  Staff,
+  ClientProject, 
+  StaffClientProject, 
+  UserRole, 
+  SignupFormData 
+} from '@/types';
 
 // ==================== LEADS ====================
 
@@ -24,23 +32,10 @@ export async function createLead(data: SignupFormData): Promise<string> {
   const leadData = {
     name: data.name,
     email: data.email,
-    mobileNumber: data.mobileNumber,
-    clinicName: data.clinicName,
-    address: data.address,
-    location: data.location,
-    reasonForContact: data.reasonForContact,
-    referralSource: data.referralSource,
-    survey: {
-      hasExistingWebsite: data.hasExistingWebsite,
-      hasChatbot: data.hasChatbot,
-      hasAIAgent: data.hasAIAgent,
-      hasReceptionist: data.hasReceptionist,
-      hasAutomationTools: data.hasAutomationTools,
-      additionalNotes: data.additionalNotes,
-    },
-    status: 'pending',
+    phone: data.phone,
+    source: data.source,
+    country: data.country,
     createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
   };
 
   const docRef = await addDoc(collection(db, 'leads'), leadData);
@@ -61,43 +56,111 @@ export async function getAllLeads(): Promise<Lead[]> {
     leadId: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toDate(),
-    updatedAt: doc.data().updatedAt?.toDate(),
   })) as Lead[];
 }
 
 /**
- * Get leads by status
+ * Delete lead
  */
-export async function getLeadsByStatus(status: 'pending' | 'approved' | 'rejected'): Promise<Lead[]> {
-  const q = query(
-    collection(db, 'leads'),
-    where('status', '==', status),
-    orderBy('createdAt', 'desc')
-  );
-  
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    leadId: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate(),
-    updatedAt: doc.data().updatedAt?.toDate(),
-  })) as Lead[];
-}
-
-/**
- * Update lead status
- */
-export async function updateLeadStatus(
-  leadId: string, 
-  status: 'pending' | 'approved' | 'rejected'
-): Promise<void> {
-  await updateDoc(doc(db, 'leads', leadId), {
-    status,
-    updatedAt: Timestamp.now(),
-  });
+export async function deleteLead(leadId: string): Promise<void> {
+  await deleteDoc(doc(db, 'leads', leadId));
 }
 
 // ==================== USERS ====================
+
+/**
+ * Get user by username
+ */
+export async function getUserByUsername(username: string): Promise<User | null> {
+  const q = query(
+    collection(db, 'users'),
+    where('username', '==', username)
+  );
+  
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) {
+    return null;
+  }
+  
+  const doc = snapshot.docs[0];
+  return {
+    userId: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt?.toDate(),
+    lastLoginAt: doc.data().lastLoginAt?.toDate(),
+  } as User;
+}
+
+/**
+ * Get user by email
+ */
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const q = query(
+    collection(db, 'users'),
+    where('email', '==', email)
+  );
+  
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) {
+    return null;
+  }
+  
+  const doc = snapshot.docs[0];
+  return {
+    userId: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt?.toDate(),
+    lastLoginAt: doc.data().lastLoginAt?.toDate(),
+  } as User;
+}
+
+/**
+ * Check if username exists
+ */
+export async function isUsernameAvailable(username: string): Promise<boolean> {
+  const user = await getUserByUsername(username);
+  return user === null;
+}
+
+/**
+ * Check if email exists
+ */
+export async function isEmailAvailable(email: string): Promise<boolean> {
+  const user = await getUserByEmail(email);
+  return user === null;
+}
+
+/**
+ * Create new user
+ */
+export async function createUser(data: {
+  username: string;
+  email: string;
+  passwordHash: string;
+  role: UserRole;
+  status: 'active' | 'pending' | 'disabled';
+}): Promise<string> {
+  const userData = {
+    username: data.username,
+    email: data.email,
+    passwordHash: data.passwordHash,
+    role: data.role,
+    status: data.status,
+    createdAt: Timestamp.now(),
+  };
+
+  const docRef = await addDoc(collection(db, 'users'), userData);
+  return docRef.id;
+}
+
+/**
+ * Update user last login
+ */
+export async function updateUserLastLogin(userId: string): Promise<void> {
+  await updateDoc(doc(db, 'users', userId), {
+    lastLoginAt: Timestamp.now(),
+  });
+}
 
 /**
  * Get all users
@@ -113,7 +176,7 @@ export async function getAllUsers(): Promise<User[]> {
     userId: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toDate(),
-    updatedAt: doc.data().updatedAt?.toDate(),
+    lastLoginAt: doc.data().lastLoginAt?.toDate(),
   })) as User[];
 }
 
@@ -132,7 +195,7 @@ export async function getUsersByRole(role: UserRole): Promise<User[]> {
     userId: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toDate(),
-    updatedAt: doc.data().updatedAt?.toDate(),
+    lastLoginAt: doc.data().lastLoginAt?.toDate(),
   })) as User[];
 }
 
@@ -141,12 +204,9 @@ export async function getUsersByRole(role: UserRole): Promise<User[]> {
  */
 export async function updateUser(
   userId: string, 
-  data: Partial<Omit<User, 'userId' | 'createdAt' | 'updatedAt'>>
+  data: Partial<Omit<User, 'userId' | 'createdAt'>>
 ): Promise<void> {
-  await updateDoc(doc(db, 'users', userId), {
-    ...data,
-    updatedAt: Timestamp.now(),
-  });
+  await updateDoc(doc(db, 'users', userId), data);
 }
 
 /**
@@ -154,6 +214,64 @@ export async function updateUser(
  */
 export async function deleteUser(userId: string): Promise<void> {
   await deleteDoc(doc(db, 'users', userId));
+}
+
+// ==================== CLIENTS ====================
+
+/**
+ * Create client
+ */
+export async function createClient(clientId: string, clientName: string): Promise<void> {
+  await updateDoc(doc(db, 'clients', clientId), {
+    clientName,
+    createdAt: Timestamp.now(),
+  });
+}
+
+/**
+ * Get client by ID
+ */
+export async function getClient(clientId: string): Promise<Client | null> {
+  const docSnap = await getDoc(doc(db, 'clients', clientId));
+  
+  if (!docSnap.exists()) {
+    return null;
+  }
+  
+  return {
+    clientId: docSnap.id,
+    ...docSnap.data(),
+    createdAt: docSnap.data().createdAt?.toDate(),
+  } as Client;
+}
+
+// ==================== STAFF ====================
+
+/**
+ * Create staff
+ */
+export async function createStaff(staffId: string, staffName: string): Promise<void> {
+  await updateDoc(doc(db, 'staff', staffId), {
+    staffName,
+    createdAt: Timestamp.now(),
+  });
+}
+
+/**
+ * Get staff by ID
+ */
+export async function getStaff(staffId: string): Promise<Staff | null> {
+  const docSnap = await getDoc(doc(db, 'staff', staffId));
+  
+  if (!docSnap.exists()) {
+    return null;
+  }
+  
+  return {
+    staffId: docSnap.id,
+    ...docSnap.data(),
+    createdAt: docSnap.data().createdAt?.toDate(),
+  } as Staff;
 }
 
 // ==================== CLIENT PROJECTS ====================
@@ -164,24 +282,27 @@ export async function deleteUser(userId: string): Promise<void> {
 export async function createClientProject(
   clientId: string,
   projectName: string,
-  description?: string
+  firebaseConfig?: {
+    apiKey?: string;
+    authDomain?: string;
+    firebaseProjectId?: string;
+    storageBucket?: string;
+    messagingSenderId?: string;
+    appId?: string;
+    measurementId?: string;
+  }
 ): Promise<string> {
   const projectData = {
     clientId,
-    clientProjectName: projectName,
-    description,
-    firebaseConfig: {
-      apiKey: '',
-      authDomain: '',
-      projectId: '',
-      storageBucket: '',
-      messagingSenderId: '',
-      appId: '',
-      measurementId: '',
-    },
-    status: 'setup',
+    projectName,
+    apiKey: firebaseConfig?.apiKey || '',
+    authDomain: firebaseConfig?.authDomain || '',
+    firebaseProjectId: firebaseConfig?.firebaseProjectId || '',
+    storageBucket: firebaseConfig?.storageBucket || '',
+    messagingSenderId: firebaseConfig?.messagingSenderId || '',
+    appId: firebaseConfig?.appId || '',
+    measurementId: firebaseConfig?.measurementId || '',
     createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
   };
 
   const docRef = await addDoc(collection(db, 'clientProjects'), projectData);
@@ -203,7 +324,6 @@ export async function getClientProjects(clientId: string): Promise<ClientProject
     clientProjectId: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toDate(),
-    updatedAt: doc.data().updatedAt?.toDate(),
   })) as ClientProject[];
 }
 
@@ -221,7 +341,6 @@ export async function getAllClientProjects(): Promise<ClientProject[]> {
     clientProjectId: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toDate(),
-    updatedAt: doc.data().updatedAt?.toDate(),
   })) as ClientProject[];
 }
 
@@ -230,12 +349,9 @@ export async function getAllClientProjects(): Promise<ClientProject[]> {
  */
 export async function updateClientProject(
   projectId: string,
-  data: Partial<Omit<ClientProject, 'clientProjectId' | 'clientId' | 'createdAt' | 'updatedAt'>>
+  data: Partial<Omit<ClientProject, 'clientProjectId' | 'clientId' | 'createdAt'>>
 ): Promise<void> {
-  await updateDoc(doc(db, 'clientProjects', projectId), {
-    ...data,
-    updatedAt: Timestamp.now(),
-  });
+  await updateDoc(doc(db, 'clientProjects', projectId), data);
 }
 
 /**
@@ -252,7 +368,6 @@ export async function getClientProject(projectId: string): Promise<ClientProject
     clientProjectId: docSnap.id,
     ...docSnap.data(),
     createdAt: docSnap.data().createdAt?.toDate(),
-    updatedAt: docSnap.data().updatedAt?.toDate(),
   } as ClientProject;
 }
 
@@ -264,13 +379,14 @@ export async function getClientProject(projectId: string): Promise<ClientProject
 export async function assignStaffToProject(
   staffId: string,
   clientProjectId: string,
+  staffRole: 'primary' | 'secondary' | 'support',
   notes?: string
 ): Promise<void> {
-  const mappingId = `${staffId}_${clientProjectId}`;
   await addDoc(collection(db, 'staffClientProjects'), {
     staffId,
     clientProjectId,
     assignmentStatus: 'active',
+    staffRole,
     notes,
     assignedAt: Timestamp.now(),
   });

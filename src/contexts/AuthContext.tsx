@@ -1,22 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User } from '@/types';
 import { 
-  subscribeToAuthState, 
-  getUserData, 
-  signInWithEmail, 
-  signInWithGoogle, 
+  signInWithCredentials, 
   signOutUser,
-  resetPassword,
+  getStoredUser,
+  storeUser,
+  clearStoredUser,
 } from '@/services/auth.service';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  sendPasswordReset: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,43 +23,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = subscribeToAuthState(async (firebaseUser) => {
-      if (firebaseUser) {
-        // Defer Firestore call to prevent deadlock
-        setTimeout(async () => {
-          try {
-            const userData = await getUserData(firebaseUser.uid);
-            setUser(userData);
-          } catch (error) {
-            console.error('Error fetching user data:', error);
-            setUser(null);
-          } finally {
-            setIsLoading(false);
-          }
-        }, 0);
-      } else {
-        setUser(null);
-        setIsLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const login = useCallback(async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const userData = await signInWithEmail(email, password);
-      setUser(userData);
-    } finally {
-      setIsLoading(false);
+    // Check for stored user session
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
     }
+    setIsLoading(false);
   }, []);
 
-  const loginWithGoogle = useCallback(async () => {
+  const login = useCallback(async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      const userData = await signInWithGoogle();
+      const userData = await signInWithCredentials(username, password);
+      storeUser(userData);
       setUser(userData);
     } finally {
       setIsLoading(false);
@@ -71,11 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     await signOutUser();
+    clearStoredUser();
     setUser(null);
-  }, []);
-
-  const sendPasswordReset = useCallback(async (email: string) => {
-    await resetPassword(email);
   }, []);
 
   const value: AuthContextType = {
@@ -83,9 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     isAuthenticated: !!user,
     login,
-    loginWithGoogle,
     logout,
-    sendPasswordReset,
   };
 
   return (
