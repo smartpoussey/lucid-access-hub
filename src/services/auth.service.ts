@@ -78,28 +78,34 @@ export async function registerUser(
     throw new Error('Email is already registered');
   }
   
-  // Hash password for Firestore storage FIRST (before any async operations that might interfere)
+  // Hash password for Firestore storage
   const passwordHash = await hashPassword(password);
   
-  // Create user in Firestore with pending status
-  const userId = await createUserInFirestore({
-    username,
-    email,
-    passwordHash,
-    role: 'client' as UserRole, // Default role for new registrations
-    status: 'pending',
-  });
-  
-  // Create Firebase Auth user for email verification
+  // Create Firebase Auth user FIRST (needed for Firestore rules that require auth)
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   
-  // Send email verification
-  await sendEmailVerification(userCredential.user);
-  
-  // Sign out from Firebase Auth (we use custom auth)
-  await signOut(auth);
-  
-  return { userId, requiresEmailVerification: true };
+  try {
+    // Create user in Firestore with pending status (now we have an authenticated user)
+    const userId = await createUserInFirestore({
+      username,
+      email,
+      passwordHash,
+      role: 'client' as UserRole,
+      status: 'pending',
+    });
+    
+    // Send email verification
+    await sendEmailVerification(userCredential.user);
+    
+    // Sign out from Firebase Auth (we use custom username/password auth)
+    await signOut(auth);
+    
+    return { userId, requiresEmailVerification: true };
+  } catch (error) {
+    // If Firestore write fails, delete the Firebase Auth user to avoid orphaned accounts
+    await userCredential.user.delete();
+    throw error;
+  }
 }
 
 /**
