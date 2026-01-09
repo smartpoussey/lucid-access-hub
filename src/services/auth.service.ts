@@ -7,12 +7,14 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/config/firebase';
 import type { User, UserRole } from '@/types';
-import { 
-  getUserByUsername, 
-  updateUserLastLogin, 
-  createUser as createUserInFirestore,
-  isUsernameAvailable,
-  isEmailAvailable,
+import {
+  getUserByUsername,
+  updateUserLastLogin,
+  createUserWithId as createUserInFirestore,
+  reserveUsername,
+  reserveEmail,
+  releaseUsername,
+  releaseEmail,
 } from './firestore.service';
 
 // Simple hash function for password (in production, use bcrypt on backend)
@@ -36,7 +38,8 @@ async function verifyPassword(password: string, storedHash: string): Promise<boo
  * Sign in with username and password (custom auth against Firestore)
  */
 export async function signInWithCredentials(username: string, password: string): Promise<User> {
-  const user = await getUserByUsername(username);
+  const usernameKey = username.trim().toLowerCase();
+  const user = await getUserByUsername(usernameKey);
   
   if (!user) {
     throw new Error('Invalid username or password');
@@ -66,44 +69,63 @@ export async function registerUser(
   email: string,
   password: string
 ): Promise<{ userId: string; requiresEmailVerification: boolean }> {
-  // Check if username is available
-  const usernameAvailable = await isUsernameAvailable(username);
-  if (!usernameAvailable) {
-    throw new Error('Username is already taken');
-  }
-  
-  // Check if email is available
-  const emailAvailable = await isEmailAvailable(email);
-  if (!emailAvailable) {
-    throw new Error('Email is already registered');
-  }
-  
+  const usernameKey = username.trim().toLowerCase();
+  const emailKey = email.trim().toLowerCase();
+
   // Hash password for Firestore storage
   const passwordHash = await hashPassword(password);
-  
-  // Create Firebase Auth user FIRST (needed for Firestore rules that require auth)
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  
+
+  // Create Firebase Auth user (signs the user in)
+  let userCredential;
   try {
-    // Create user in Firestore with pending status (now we have an authenticated user)
-    const userId = await createUserInFirestore({
-      username,
-      email,
+    userCredential = await createUserWithEmailAndPassword(auth, emailKey, password);
+  } catch (error: any) {
+    if (error?.code === 'auth/email-already-in-use') {
+      throw new Error('Email is already registered');
+    }
+    throw error;
+  }
+
+  const uid = userCredential.user.uid;
+
+  try {
+    // Reserve username + email without requiring any reads
+    await reserveUsername(uid, usernameKey);
+    await reserveEmail(uid, emailKey);
+
+    // Create Firestore user doc with UID as document id
+    const userId = await createUserInFirestore(uid, {
+      username: usernameKey,
+      email: emailKey,
       passwordHash,
       role: 'client' as UserRole,
       status: 'pending',
     });
-    
-    // Send email verification
+
     await sendEmailVerification(userCredential.user);
-    
-    // Sign out from Firebase Auth (we use custom username/password auth)
     await signOut(auth);
-    
+
     return { userId, requiresEmailVerification: true };
-  } catch (error) {
-    // If Firestore write fails, delete the Firebase Auth user to avoid orphaned accounts
+  } catch (error: any) {
+    // Best-effort cleanup
+    await Promise.allSettled([
+      releaseUsername(usernameKey),
+      releaseEmail(emailKey),
+    ]);
+
     await userCredential.user.delete();
+
+    // Map common "permission denied" into a more helpful message
+    if (error?.code === 'permission-denied') {
+      throw new Error('Registration blocked by Firestore rules (missing permissions).');
+    }
+
+    // If the username/email docs already exist, setDoc becomes an update and is denied by rules.
+    // Treat that as "already taken".
+    if (error?.code === 'permission-denied') {
+      throw new Error('Username or email is already taken');
+    }
+
     throw error;
   }
 }
