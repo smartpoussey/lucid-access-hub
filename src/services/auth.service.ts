@@ -78,16 +78,10 @@ export async function registerUser(
     throw new Error('Email is already registered');
   }
   
-  // Create Firebase Auth user for email verification
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  
-  // Send email verification
-  await sendEmailVerification(userCredential.user);
-  
-  // Hash password for Firestore storage
+  // Hash password for Firestore storage FIRST (before any async operations that might interfere)
   const passwordHash = await hashPassword(password);
   
-  // Create user in Firestore with pending status until email is verified
+  // Create user in Firestore with pending status
   const userId = await createUserInFirestore({
     username,
     email,
@@ -95,6 +89,12 @@ export async function registerUser(
     role: 'client' as UserRole, // Default role for new registrations
     status: 'pending',
   });
+  
+  // Create Firebase Auth user for email verification
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  
+  // Send email verification
+  await sendEmailVerification(userCredential.user);
   
   // Sign out from Firebase Auth (we use custom auth)
   await signOut(auth);
