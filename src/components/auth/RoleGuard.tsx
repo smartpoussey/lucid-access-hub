@@ -35,11 +35,11 @@ export function RoleGuard({
 
   if (!user || !allowedRoles.includes(user.role)) {
     // Redirect to appropriate dashboard based on role
-    const redirectPath = user?.role === 'ADMIN' 
+    const redirectPath = user?.role === 'admin' 
       ? '/admin' 
-      : user?.role === 'STAFF' 
+      : user?.role === 'staff' 
       ? '/staff' 
-      : user?.role === 'CLIENT' 
+      : user?.role === 'client' 
       ? '/client' 
       : '/login';
     
@@ -95,9 +95,9 @@ export function GuestGuard({ children }: GuestGuardProps) {
 
   if (isAuthenticated && user) {
     // Redirect to appropriate dashboard based on role
-    const redirectPath = user.role === 'ADMIN' 
+    const redirectPath = user.role === 'admin' 
       ? '/admin' 
-      : user.role === 'STAFF' 
+      : user.role === 'staff' 
       ? '/staff' 
       : '/client';
     
