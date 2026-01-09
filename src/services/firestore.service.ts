@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -131,7 +132,67 @@ export async function isEmailAvailable(email: string): Promise<boolean> {
 }
 
 /**
- * Create new user
+ * Reserve a username (use a normalized key, e.g. lowercase)
+ *
+ * Uses collection: usernames/{usernameKey}
+ */
+export async function reserveUsername(userId: string, usernameKey: string): Promise<void> {
+  await setDoc(doc(db, 'usernames', usernameKey), {
+    userId,
+    username: usernameKey,
+    createdAt: Timestamp.now(),
+  });
+}
+
+export async function releaseUsername(usernameKey: string): Promise<void> {
+  await deleteDoc(doc(db, 'usernames', usernameKey));
+}
+
+/**
+ * Reserve an email (use a normalized key, e.g. lowercase)
+ *
+ * Uses collection: emails/{emailKey}
+ */
+export async function reserveEmail(userId: string, emailKey: string): Promise<void> {
+  await setDoc(doc(db, 'emails', emailKey), {
+    userId,
+    email: emailKey,
+    createdAt: Timestamp.now(),
+  });
+}
+
+export async function releaseEmail(emailKey: string): Promise<void> {
+  await deleteDoc(doc(db, 'emails', emailKey));
+}
+
+/**
+ * Create new user with a specific document id (recommended: Firebase Auth UID)
+ */
+export async function createUserWithId(
+  userId: string,
+  data: {
+    username: string;
+    email: string;
+    passwordHash: string;
+    role: UserRole;
+    status: 'active' | 'pending' | 'disabled';
+  }
+): Promise<string> {
+  const userData = {
+    username: data.username,
+    email: data.email,
+    passwordHash: data.passwordHash,
+    role: data.role,
+    status: data.status,
+    createdAt: Timestamp.now(),
+  };
+
+  await setDoc(doc(db, 'users', userId), userData);
+  return userId;
+}
+
+/**
+ * Create new user (auto id)
  */
 export async function createUser(data: {
   username: string;
