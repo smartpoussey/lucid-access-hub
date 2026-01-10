@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Shield, Zap, Users, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const features = [
   { icon: Shield, title: 'Secure Authentication', description: 'Enterprise-grade Firebase auth with role-based access control.' },
@@ -23,6 +24,7 @@ export default function Index() {
             <span className="text-xl font-display font-semibold text-foreground">Lucidence</span>
           </Link>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <Link to="/login"><Button variant="ghost">Login</Button></Link>
             <Link to="/signup"><Button className="bg-primary text-primary-foreground">Get Started</Button></Link>
           </div>
