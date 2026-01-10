@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Register from "./pages/Register";
+import RegisterRole from "./pages/RegisterRole";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import LeadsManagement from "./pages/admin/LeadsManagement";
 import UsersManagement from "./pages/admin/UsersManagement";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/login" element={<GuestGuard><Login /></GuestGuard>} />
             <Route path="/signup" element={<GuestGuard><Signup /></GuestGuard>} />
             <Route path="/register" element={<GuestGuard><Register /></GuestGuard>} />
+            <Route path="/register-role" element={<GuestGuard><RegisterRole /></GuestGuard>} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<RoleGuard allowedRoles={['admin']}><AdminDashboard /></RoleGuard>} />
