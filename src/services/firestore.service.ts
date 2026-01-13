@@ -388,6 +388,9 @@ export async function getClientProjects(clientId: string): Promise<ClientProject
   })) as ClientProject[];
 }
 
+// Alias for getClientProjects - used by useClientProjects hook
+export const getClientProjectsByClientId = getClientProjects;
+
 /**
  * Get all client projects (admin)
  */

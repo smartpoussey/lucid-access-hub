@@ -22,7 +22,7 @@ export function projectToFirebaseConfig(project: ClientProject): ClientProjectFi
   return {
     apiKey: project.apiKey,
     authDomain: project.authDomain,
-    projectId: project.firebaseProjectId,
+    projectId: project.projectId,
     storageBucket: project.storageBucket,
     messagingSenderId: project.messagingSenderId,
     appId: project.appId,

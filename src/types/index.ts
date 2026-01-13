@@ -44,10 +44,12 @@ export interface Client {
 export interface ClientProject {
   clientProjectId: string;
   clientId: string;
+  appName: string;
+  appEnv: string;
   projectName: string;
   apiKey: string;
   authDomain: string;
-  firebaseProjectId: string;
+  projectId: string;
   storageBucket: string;
   messagingSenderId: string;
   appId: string;

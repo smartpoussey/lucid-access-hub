@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getClientProjects } from '@/services/firestore.service';
+import { getClientProjectsByClientId } from '@/services/firestore.service';
 import { 
   initializeClientProjectFirebase,
   projectToFirebaseConfig,
@@ -34,8 +34,8 @@ export function useClientProjects() {
     setError(null);
     
     try {
-      const clientProjects = await getClientProjects(user.userId);
-      setProjects(clientProjects);
+      const clientProjects = await getClientProjectsByClientId(user.userId);
+      setProjects(clientProjects as ClientProject[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch projects');
     } finally {
