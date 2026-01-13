@@ -239,7 +239,7 @@ export default function ClientDashboard() {
                         {project.projectName}
                       </CardTitle>
                       <CardDescription>
-                        Project ID: {project.firebaseProjectId}
+                        Project ID: {project.projectId}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>

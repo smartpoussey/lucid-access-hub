@@ -22,10 +22,12 @@ export default function ProjectsManagement() {
     {
       clientProjectId: '1',
       clientId: 'client1',
+      appName: 'Bay Area Medical',
+      appEnv: 'production',
       projectName: 'Bay Area Medical - AI Assistant',
       apiKey: 'demo-key',
       authDomain: 'project.firebaseapp.com',
-      firebaseProjectId: 'bay-area-medical-ai',
+      projectId: 'bay-area-medical-ai',
       storageBucket: 'project.appspot.com',
       messagingSenderId: '123456789',
       appId: '1:123:web:abc',
@@ -34,10 +36,12 @@ export default function ProjectsManagement() {
     {
       clientProjectId: '2',
       clientId: 'client2',
+      appName: 'Pacific Dental',
+      appEnv: 'production',
       projectName: 'Pacific Dental - Chatbot',
       apiKey: 'demo-key-2',
       authDomain: 'project2.firebaseapp.com',
-      firebaseProjectId: 'pacific-dental-chat',
+      projectId: 'pacific-dental-chat',
       storageBucket: 'project2.appspot.com',
       messagingSenderId: '987654321',
       appId: '1:987:web:xyz',
@@ -46,10 +50,12 @@ export default function ProjectsManagement() {
     {
       clientProjectId: '3',
       clientId: 'client3',
+      appName: 'Sunrise Wellness',
+      appEnv: 'staging',
       projectName: 'Sunrise Wellness - Portal',
       apiKey: '',
       authDomain: '',
-      firebaseProjectId: '',
+      projectId: '',
       storageBucket: '',
       messagingSenderId: '',
       appId: '',
@@ -79,7 +85,7 @@ export default function ProjectsManagement() {
   );
 
   const getProjectStatus = (project: ClientProject) => {
-    if (!project.apiKey || !project.firebaseProjectId) {
+    if (!project.apiKey || !project.projectId) {
       return 'setup';
     }
     return 'active';
@@ -179,7 +185,7 @@ export default function ProjectsManagement() {
                           {project.projectName}
                         </CardTitle>
                         <CardDescription className="line-clamp-2">
-                          Project ID: {project.firebaseProjectId || 'Not configured'}
+                          Project ID: {project.projectId || 'Not configured'}
                         </CardDescription>
                       </div>
                       <Badge className={getStatusColor(status)}>
