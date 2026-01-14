@@ -14,10 +14,13 @@ const mainFirebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "YOUR_MEASUREMENT_ID",
 };
 
-// Initialize main Firebase app
-const mainApp: FirebaseApp = !getApps().length 
-  ? initializeApp(mainFirebaseConfig) 
-  : getApp();
+// Initialize main Firebase app (use existing if already initialized)
+let mainApp: FirebaseApp;
+try {
+  mainApp = getApp();
+} catch {
+  mainApp = initializeApp(mainFirebaseConfig);
+}
 
 export const auth: Auth = getAuth(mainApp);
 export const db: Firestore = getFirestore(mainApp);
