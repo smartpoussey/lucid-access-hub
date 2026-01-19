@@ -108,7 +108,10 @@ export function useDashboardData(collections: CollectionData[]) {
     const data: ChartDataPoint[] = days.map((name) => ({ name, new: 0, existing: 0 }));
 
     interactions.forEach((interaction) => {
-      const dayIndex = interaction.callTimestamp.getDay();
+      const timestamp = interaction.callTimestamp;
+      if (!(timestamp instanceof Date) || isNaN(timestamp.getTime())) return;
+      const dayIndex = timestamp.getDay();
+      if (dayIndex < 0 || dayIndex > 6) return;
       if (interaction.patientType === 'new') {
         data[dayIndex].new += 1;
       } else {
