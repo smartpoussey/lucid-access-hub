@@ -1,9 +1,18 @@
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Users } from 'lucide-react';
+import { Users, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -19,6 +28,11 @@ interface PatientsPageProps {
   patients: PatientRow[];
   searchQuery: string;
 }
+
+type SortField = 'name' | 'createdAt' | 'urgency' | 'patientType';
+type SortDirection = 'asc' | 'desc';
+
+const urgencyOrder = { low: 0, medium: 1, high: 2 };
 
 function getInitials(name: string): string {
   return name
@@ -47,20 +61,66 @@ function getPatientTypeColor(type: 'new' | 'existing') {
 }
 
 export function PatientsPage({ patients, searchQuery }: PatientsPageProps) {
-  const filteredPatients = patients.filter(
-    (patient) =>
-      patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.phone.includes(searchQuery)
-  );
+  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const filteredAndSortedPatients = useMemo(() => {
+    const filtered = patients.filter(
+      (patient) =>
+        patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        patient.phone.includes(searchQuery)
+    );
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'createdAt':
+          comparison = a.createdAt.getTime() - b.createdAt.getTime();
+          break;
+        case 'urgency':
+          comparison = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+          break;
+        case 'patientType':
+          comparison = a.patientType.localeCompare(b.patientType);
+          break;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [patients, searchQuery, sortField, sortDirection]);
+
+  const toggleSortDirection = () => {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
 
   return (
     <div className="space-y-6">
       <Card className="card-elevated">
         <CardHeader>
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            All Patients ({filteredPatients.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              All Patients ({filteredAndSortedPatients.length})
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Select value={sortField} onValueChange={(value) => setSortField(value as SortField)}>
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="createdAt">Date Added</SelectItem>
+                  <SelectItem value="urgency">Urgency</SelectItem>
+                  <SelectItem value="patientType">Type</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={toggleSortDirection} className="h-8 px-2">
+                {sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[calc(100vh-280px)]">
@@ -75,7 +135,7 @@ export function PatientsPage({ patients, searchQuery }: PatientsPageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPatients.length === 0 ? (
+                {filteredAndSortedPatients.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-12">
                       <Users className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
@@ -85,7 +145,7 @@ export function PatientsPage({ patients, searchQuery }: PatientsPageProps) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPatients.map((patient, index) => (
+                  filteredAndSortedPatients.map((patient, index) => (
                     <motion.tr
                       key={patient.id}
                       initial={{ opacity: 0 }}

@@ -1,8 +1,17 @@
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Phone, User } from 'lucide-react';
+import { Calendar, Clock, Phone, User, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 interface Appointment {
@@ -19,6 +28,9 @@ interface AppointmentsPageProps {
   searchQuery: string;
 }
 
+type SortField = 'patientName' | 'dateTime' | 'status';
+type SortDirection = 'asc' | 'desc';
+
 function getStatusColor(status: string) {
   const s = status.toLowerCase();
   if (s.includes('booked') || s.includes('confirmed')) {
@@ -34,6 +46,9 @@ function getStatusColor(status: string) {
 }
 
 function formatDate(date: Date): string {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return 'No date';
+  }
   return date.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -43,6 +58,9 @@ function formatDate(date: Date): string {
 }
 
 function formatTime(date: Date): string {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return '';
+  }
   return date.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -51,25 +69,67 @@ function formatTime(date: Date): string {
 }
 
 export function AppointmentsPage({ appointments, searchQuery }: AppointmentsPageProps) {
-  const filteredAppointments = appointments.filter(
-    (apt) =>
-      apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.patientPhone.includes(searchQuery)
-  );
+  const [sortField, setSortField] = useState<SortField>('dateTime');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const filteredAndSortedAppointments = useMemo(() => {
+    const filtered = appointments.filter(
+      (apt) =>
+        apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        apt.patientPhone.includes(searchQuery)
+    );
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'patientName':
+          comparison = a.patientName.localeCompare(b.patientName);
+          break;
+        case 'dateTime':
+          comparison = a.dateTime.getTime() - b.dateTime.getTime();
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [appointments, searchQuery, sortField, sortDirection]);
+
+  const toggleSortDirection = () => {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
 
   return (
     <div className="space-y-6">
       <Card className="card-elevated">
         <CardHeader>
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            All Appointments ({filteredAppointments.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              All Appointments ({filteredAndSortedAppointments.length})
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Select value={sortField} onValueChange={(value) => setSortField(value as SortField)}>
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="patientName">Patient Name</SelectItem>
+                  <SelectItem value="dateTime">Date & Time</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={toggleSortDirection} className="h-8 px-2">
+                {sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[calc(100vh-280px)]">
             <div className="space-y-3 p-4 pt-0">
-              {filteredAppointments.length === 0 ? (
+              {filteredAndSortedAppointments.length === 0 ? (
                 <div className="text-center py-12">
                   <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground">
@@ -77,7 +137,7 @@ export function AppointmentsPage({ appointments, searchQuery }: AppointmentsPage
                   </p>
                 </div>
               ) : (
-                filteredAppointments.map((apt, index) => (
+                filteredAndSortedAppointments.map((apt, index) => (
                   <motion.div
                     key={apt.id}
                     initial={{ opacity: 0, y: 10 }}
