@@ -13,6 +13,20 @@ interface CollectionData {
   documents: { id: string; data: Record<string, unknown> }[];
 }
 
+function parseTimestamp(value: unknown): Date {
+  if (!value) return new Date();
+  // Firestore Timestamp has toDate() method
+  if (typeof value === 'object' && value !== null && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
+    return (value as { toDate: () => Date }).toDate();
+  }
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+  return new Date();
+}
+
 function parseContact(doc: { id: string; data: Record<string, unknown> }): Contact {
   const data = doc.data;
   return {
@@ -22,8 +36,8 @@ function parseContact(doc: { id: string; data: Record<string, unknown> }): Conta
     mobileNumber: (data.mobileNumber as string) || '',
     patientId: (data.patientId as number) || 0,
     patientType: ((data.patientType as string) || 'new') as 'new' | 'existing',
-    createdAt: data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt as string || Date.now()),
-    updatedAt: data.updatedAt instanceof Date ? data.updatedAt : new Date(data.updatedAt as string || Date.now()),
+    createdAt: parseTimestamp(data.createdAt),
+    updatedAt: parseTimestamp(data.updatedAt),
   };
 }
 
@@ -38,15 +52,9 @@ function parseInteraction(doc: { id: string; data: Record<string, unknown> }): I
     transcript: (data.transcript as string) || '',
     callDay: (data.callDay as string) || '',
     callHour: (data.callHour as number) || 0,
-    callTimestamp: data.callTimestamp instanceof Date 
-      ? data.callTimestamp 
-      : new Date(data.callTimestamp as string || Date.now()),
-    createdAt: data.createdAt instanceof Date 
-      ? data.createdAt 
-      : new Date(data.createdAt as string || Date.now()),
-    updatedAt: data.updatedAt instanceof Date 
-      ? data.updatedAt 
-      : new Date(data.updatedAt as string || Date.now()),
+    callTimestamp: parseTimestamp(data.callTimestamp),
+    createdAt: parseTimestamp(data.createdAt),
+    updatedAt: parseTimestamp(data.updatedAt),
   };
 }
 
