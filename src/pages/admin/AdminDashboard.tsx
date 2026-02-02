@@ -1,54 +1,155 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Users, UserPlus, FolderKanban, Activity,
-  TrendingUp, ArrowUpRight, ArrowDownRight
+  ArrowUpRight, ArrowDownRight, Loader2
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { getAllLeads, getAllUsers, getAllClientProjects, getLeadsCountByStatus } from '@/services/firestore.service';
+import type { Lead, User } from '@/types';
 
-const stats = [
-  {
-    title: 'Total Leads',
-    value: '127',
-    change: '+12%',
-    trend: 'up',
-    icon: UserPlus,
-    description: 'This month',
-  },
-  {
-    title: 'Active Users',
-    value: '89',
-    change: '+8%',
-    trend: 'up',
-    icon: Users,
-    description: 'All time',
-  },
-  {
-    title: 'Active Projects',
-    value: '34',
-    change: '+5%',
-    trend: 'up',
-    icon: FolderKanban,
-    description: 'Currently running',
-  },
-  {
-    title: 'System Health',
-    value: '99.9%',
-    change: '-0.1%',
-    trend: 'down',
-    icon: Activity,
-    description: 'Uptime',
-  },
-];
-
-const recentLeads = [
-  { name: 'Dr. Sarah Johnson', clinic: 'Bay Area Medical', date: '2 hours ago', status: 'pending' },
-  { name: 'Michael Chen', clinic: 'Pacific Dental', date: '4 hours ago', status: 'pending' },
-  { name: 'Emily Roberts', clinic: 'Sunrise Wellness', date: '1 day ago', status: 'approved' },
-  { name: 'James Wilson', clinic: 'Metro Health', date: '2 days ago', status: 'approved' },
-];
+interface DashboardStats {
+  totalLeads: number;
+  pendingLeads: number;
+  activeUsers: number;
+  activeProjects: number;
+  leadsThisMonth: number;
+  usersThisMonth: number;
+}
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalLeads: 0,
+    pendingLeads: 0,
+    activeUsers: 0,
+    activeProjects: 0,
+    leadsThisMonth: 0,
+    usersThisMonth: 0,
+  });
+  const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const [leads, users, projects, leadsCount] = await Promise.all([
+        getAllLeads(),
+        getAllUsers(),
+        getAllClientProjects(),
+        getLeadsCountByStatus(),
+      ]);
+
+      // Calculate stats
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const leadsThisMonth = leads.filter(l => 
+        l.createdAt instanceof Date && l.createdAt >= startOfMonth
+      ).length;
+
+      const usersThisMonth = users.filter(u => 
+        u.createdAt instanceof Date && u.createdAt >= startOfMonth
+      ).length;
+
+      const activeUsers = users.filter(u => u.status === 'active').length;
+
+      setStats({
+        totalLeads: leadsCount.total || leads.length,
+        pendingLeads: leadsCount.pending || 0,
+        activeUsers,
+        activeProjects: projects.length,
+        leadsThisMonth,
+        usersThisMonth,
+      });
+
+      // Get recent leads (max 5)
+      setRecentLeads(leads.slice(0, 5));
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const statCards = [
+    {
+      title: 'Total Leads',
+      value: stats.totalLeads.toString(),
+      change: `+${stats.leadsThisMonth} this month`,
+      trend: 'up',
+      icon: UserPlus,
+      description: 'All time',
+    },
+    {
+      title: 'Active Users',
+      value: stats.activeUsers.toString(),
+      change: `+${stats.usersThisMonth} this month`,
+      trend: 'up',
+      icon: Users,
+      description: 'Currently active',
+    },
+    {
+      title: 'Active Projects',
+      value: stats.activeProjects.toString(),
+      change: 'All projects',
+      trend: 'up',
+      icon: FolderKanban,
+      description: 'Client projects',
+    },
+    {
+      title: 'Pending Leads',
+      value: stats.pendingLeads.toString(),
+      change: 'Awaiting review',
+      trend: stats.pendingLeads > 0 ? 'up' : 'down',
+      icon: Activity,
+      description: 'Need attention',
+    },
+  ];
+
+  const formatDate = (date: Date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) return 'N/A';
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (hours < 1) return 'Just now';
+    if (hours < 24) return `${hours} hours ago`;
+    if (days === 1) return '1 day ago';
+    return `${days} days ago`;
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge className="bg-warning/20 text-warning">pending</Badge>;
+      case 'contacted':
+        return <Badge className="bg-accent/20 text-accent">contacted</Badge>;
+      case 'approved':
+        return <Badge className="bg-success/20 text-success">approved</Badge>;
+      case 'rejected':
+        return <Badge className="bg-destructive/20 text-destructive">rejected</Badge>;
+      default:
+        return <Badge variant="secondary">{status || 'pending'}</Badge>;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -73,7 +174,7 @@ export default function AdminDashboard() {
 
         {/* Stats grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
+          {statCards.map((stat, index) => (
             <motion.div
               key={stat.title}
               initial={{ opacity: 0, y: 20 }}
@@ -94,7 +195,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2 mt-2">
                     <span
                       className={`flex items-center text-sm font-medium ${
-                        stat.trend === 'up' ? 'text-success' : 'text-destructive'
+                        stat.trend === 'up' ? 'text-success' : 'text-muted-foreground'
                       }`}
                     >
                       {stat.trend === 'up' ? (
@@ -104,10 +205,10 @@ export default function AdminDashboard() {
                       )}
                       {stat.change}
                     </span>
-                    <span className="text-sm text-muted-foreground">
-                      {stat.description}
-                    </span>
                   </div>
+                  <span className="text-sm text-muted-foreground">
+                    {stat.description}
+                  </span>
                 </CardContent>
               </Card>
             </motion.div>
@@ -128,29 +229,25 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentLeads.map((lead, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
-                    >
-                      <div>
-                        <p className="font-medium text-foreground">{lead.name}</p>
-                        <p className="text-sm text-muted-foreground">{lead.clinic}</p>
+                  {recentLeads.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No leads yet</p>
+                  ) : (
+                    recentLeads.map((lead) => (
+                      <div
+                        key={lead.leadId}
+                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+                      >
+                        <div>
+                          <p className="font-medium text-foreground">{lead.name}</p>
+                          <p className="text-sm text-muted-foreground">{lead.email}</p>
+                        </div>
+                        <div className="text-right">
+                          {getStatusBadge(lead.status)}
+                          <p className="text-xs text-muted-foreground mt-1">{formatDate(lead.createdAt)}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span
-                          className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                            lead.status === 'pending'
-                              ? 'bg-warning/20 text-warning'
-                              : 'bg-success/20 text-success'
-                          }`}
-                        >
-                          {lead.status}
-                        </span>
-                        <p className="text-xs text-muted-foreground mt-1">{lead.date}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -169,18 +266,23 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { label: 'Review Leads', icon: UserPlus, href: '/admin/leads' },
-                    { label: 'Manage Users', icon: Users, href: '/admin/users' },
-                    { label: 'View Projects', icon: FolderKanban, href: '/admin/projects' },
-                    { label: 'Analytics', icon: TrendingUp, href: '/admin/analytics' },
+                    { label: 'Review Leads', icon: UserPlus, href: '/admin/leads', count: stats.pendingLeads },
+                    { label: 'Manage Users', icon: Users, href: '/admin/users', count: stats.activeUsers },
+                    { label: 'View Projects', icon: FolderKanban, href: '/admin/projects', count: stats.activeProjects },
+                    { label: 'Manage Clients', icon: Users, href: '/admin/users?role=client' },
                   ].map((action) => (
                     <a
                       key={action.label}
                       href={action.href}
-                      className="flex flex-col items-center justify-center p-6 rounded-lg bg-secondary/50 hover:bg-secondary border border-border hover:border-primary/30 transition-all"
+                      className="flex flex-col items-center justify-center p-6 rounded-lg bg-secondary/50 hover:bg-secondary border border-border hover:border-primary/30 transition-all relative"
                     >
                       <action.icon className="h-8 w-8 text-primary mb-3" />
                       <span className="text-sm font-medium text-foreground">{action.label}</span>
+                      {action.count !== undefined && action.count > 0 && (
+                        <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground">
+                          {action.count}
+                        </Badge>
+                      )}
                     </a>
                   ))}
                 </div>

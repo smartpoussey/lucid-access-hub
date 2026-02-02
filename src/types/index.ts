@@ -10,6 +10,9 @@ export type ProjectAssignmentStatus = 'active' | 'paused' | 'completed';
 // Staff Project Role
 export type StaffProjectRole = 'primary' | 'secondary' | 'support';
 
+// Lead Status
+export type LeadStatus = 'pending' | 'contacted' | 'approved' | 'rejected';
+
 // Lead interface (pre-registration)
 export interface Lead {
   leadId: string;
@@ -18,7 +21,10 @@ export interface Lead {
   phone: string;
   source: string;
   country: string;
+  status: LeadStatus;
   createdAt: Date;
+  updatedAt?: Date;
+  notes?: string;
 }
 
 // User interface

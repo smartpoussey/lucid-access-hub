@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Search, Plus, MoreHorizontal, Mail, Shield, 
@@ -9,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,72 +25,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getAllUsers } from '@/services/firestore.service';
 import type { User, UserRole } from '@/types';
 
 export default function UsersManagement() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-
-  // Demo data
-  const demoUsers: User[] = [
-    {
-      userId: '1',
-      username: 'alex_morgan',
-      email: 'admin@lucidence.com',
-      passwordHash: '',
-      role: 'admin',
-      status: 'active',
-      createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
-    },
-    {
-      userId: '2',
-      username: 'sarah_williams',
-      email: 'sarah.staff@lucidence.com',
-      passwordHash: '',
-      role: 'staff',
-      status: 'active',
-      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-    },
-    {
-      userId: '3',
-      username: 'john_smith',
-      email: 'john@bayareamedical.com',
-      passwordHash: '',
-      role: 'client',
-      status: 'active',
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    },
-    {
-      userId: '4',
-      username: 'emily_roberts',
-      email: 'emily@sunrisewellness.com',
-      passwordHash: '',
-      role: 'client',
-      status: 'pending',
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    },
-  ];
+  const [roleFilter, setRoleFilter] = useState<string>(searchParams.get('role') || 'all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     loadUsers();
   }, []);
 
   useEffect(() => {
+    // Update URL when role filter changes
+    if (roleFilter !== 'all') {
+      setSearchParams({ role: roleFilter });
+    } else {
+      setSearchParams({});
+    }
     filterUsers();
-  }, [users, searchQuery, roleFilter]);
+  }, [users, searchQuery, roleFilter, statusFilter]);
 
   const loadUsers = async () => {
     setIsLoading(true);
     try {
       const data = await getAllUsers();
-      setUsers(data.length > 0 ? data : demoUsers);
+      setUsers(data);
     } catch (error) {
       console.error('Error loading users:', error);
-      setUsers(demoUsers);
     } finally {
       setIsLoading(false);
     }
@@ -109,6 +78,10 @@ export default function UsersManagement() {
 
     if (roleFilter !== 'all') {
       filtered = filtered.filter((user) => user.role === roleFilter);
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((user) => user.status === statusFilter);
     }
 
     setFilteredUsers(filtered);
@@ -144,6 +117,40 @@ export default function UsersManagement() {
     }
   };
 
+  const getPageTitle = () => {
+    switch (roleFilter) {
+      case 'client':
+        return 'Clients Management';
+      case 'staff':
+        return 'Staff Management';
+      case 'admin':
+        return 'Admins Management';
+      default:
+        return 'Users Management';
+    }
+  };
+
+  const getPageDescription = () => {
+    switch (roleFilter) {
+      case 'client':
+        return 'Manage registered client accounts.';
+      case 'staff':
+        return 'Manage staff member accounts.';
+      case 'admin':
+        return 'Manage administrator accounts.';
+      default:
+        return 'Manage all user accounts.';
+    }
+  };
+
+  // Count users by role
+  const userCounts = {
+    all: users.length,
+    admin: users.filter(u => u.role === 'admin').length,
+    staff: users.filter(u => u.role === 'staff').length,
+    client: users.filter(u => u.role === 'client').length,
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -155,7 +162,7 @@ export default function UsersManagement() {
               animate={{ opacity: 1, y: 0 }}
               className="text-3xl font-display font-bold text-foreground"
             >
-              Users Management
+              {getPageTitle()}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: -10 }}
@@ -163,7 +170,7 @@ export default function UsersManagement() {
               transition={{ delay: 0.1 }}
               className="text-muted-foreground mt-2"
             >
-              Manage staff and client accounts.
+              {getPageDescription()}
             </motion.p>
           </div>
           <motion.div
@@ -177,6 +184,30 @@ export default function UsersManagement() {
             </Button>
           </motion.div>
         </div>
+
+        {/* Role Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <Tabs value={roleFilter} onValueChange={setRoleFilter}>
+            <TabsList className="bg-secondary">
+              <TabsTrigger value="all" className="data-[state=active]:bg-background">
+                All ({userCounts.all})
+              </TabsTrigger>
+              <TabsTrigger value="client" className="data-[state=active]:bg-background">
+                Clients ({userCounts.client})
+              </TabsTrigger>
+              <TabsTrigger value="staff" className="data-[state=active]:bg-background">
+                Staff ({userCounts.staff})
+              </TabsTrigger>
+              <TabsTrigger value="admin" className="data-[state=active]:bg-background">
+                Admins ({userCounts.admin})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </motion.div>
 
         {/* Filters */}
         <motion.div
@@ -194,16 +225,16 @@ export default function UsersManagement() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-48 bg-secondary border-border">
               <Shield className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Filter by role" />
+              <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="staff">Staff</SelectItem>
-              <SelectItem value="client">Client</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="disabled">Disabled</SelectItem>
             </SelectContent>
           </Select>
         </motion.div>

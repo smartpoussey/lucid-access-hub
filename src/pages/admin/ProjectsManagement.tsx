@@ -9,59 +9,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getAllClientProjects } from '@/services/firestore.service';
+import { getAllClientProjects, getProjectStaff } from '@/services/firestore.service';
 import type { ClientProject } from '@/types';
 
+interface ProjectWithStaffCount extends ClientProject {
+  staffCount: number;
+}
+
 export default function ProjectsManagement() {
-  const [projects, setProjects] = useState<ClientProject[]>([]);
+  const [projects, setProjects] = useState<ProjectWithStaffCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Demo data
-  const demoProjects: ClientProject[] = [
-    {
-      clientProjectId: '1',
-      clientId: 'client1',
-      appName: 'Bay Area Medical',
-      appEnv: 'production',
-      projectName: 'Bay Area Medical - AI Assistant',
-      apiKey: 'demo-key',
-      authDomain: 'project.firebaseapp.com',
-      projectId: 'bay-area-medical-ai',
-      storageBucket: 'project.appspot.com',
-      messagingSenderId: '123456789',
-      appId: '1:123:web:abc',
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    },
-    {
-      clientProjectId: '2',
-      clientId: 'client2',
-      appName: 'Pacific Dental',
-      appEnv: 'production',
-      projectName: 'Pacific Dental - Chatbot',
-      apiKey: 'demo-key-2',
-      authDomain: 'project2.firebaseapp.com',
-      projectId: 'pacific-dental-chat',
-      storageBucket: 'project2.appspot.com',
-      messagingSenderId: '987654321',
-      appId: '1:987:web:xyz',
-      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    },
-    {
-      clientProjectId: '3',
-      clientId: 'client3',
-      appName: 'Sunrise Wellness',
-      appEnv: 'staging',
-      projectName: 'Sunrise Wellness - Portal',
-      apiKey: '',
-      authDomain: '',
-      projectId: '',
-      storageBucket: '',
-      messagingSenderId: '',
-      appId: '',
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    },
-  ];
 
   useEffect(() => {
     loadProjects();
@@ -71,17 +29,30 @@ export default function ProjectsManagement() {
     setIsLoading(true);
     try {
       const data = await getAllClientProjects();
-      setProjects(data.length > 0 ? data : demoProjects);
+      
+      // Fetch staff count for each project
+      const projectsWithStaff = await Promise.all(
+        data.map(async (project) => {
+          try {
+            const staff = await getProjectStaff(project.clientProjectId);
+            return { ...project, staffCount: staff.length };
+          } catch {
+            return { ...project, staffCount: 0 };
+          }
+        })
+      );
+      
+      setProjects(projectsWithStaff);
     } catch (error) {
       console.error('Error loading projects:', error);
-      setProjects(demoProjects);
     } finally {
       setIsLoading(false);
     }
   };
 
   const filteredProjects = projects.filter((project) =>
-    project.projectName.toLowerCase().includes(searchQuery.toLowerCase())
+    project.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.appName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getProjectStatus = (project: ClientProject) => {
@@ -102,6 +73,15 @@ export default function ProjectsManagement() {
       default:
         return 'bg-muted text-muted-foreground';
     }
+  };
+
+  const formatDate = (date: Date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) return 'N/A';
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(date);
   };
 
   return (
@@ -155,6 +135,52 @@ export default function ProjectsManagement() {
           </div>
         </motion.div>
 
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+        >
+          <Card className="bg-card border-border">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-primary/10">
+                <Activity className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{projects.length}</p>
+                <p className="text-sm text-muted-foreground">Total Projects</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-border">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-success/10">
+                <Activity className="h-6 w-6 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">
+                  {projects.filter(p => getProjectStatus(p) === 'active').length}
+                </p>
+                <p className="text-sm text-muted-foreground">Active Projects</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-border">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-warning/10">
+                <Settings className="h-6 w-6 text-warning" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">
+                  {projects.filter(p => getProjectStatus(p) === 'setup').length}
+                </p>
+                <p className="text-sm text-muted-foreground">Setup Required</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* Projects grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -185,7 +211,7 @@ export default function ProjectsManagement() {
                           {project.projectName}
                         </CardTitle>
                         <CardDescription className="line-clamp-2">
-                          Project ID: {project.projectId || 'Not configured'}
+                          {project.appName || 'No app name'} • {formatDate(project.createdAt)}
                         </CardDescription>
                       </div>
                       <Badge className={getStatusColor(status)}>
@@ -198,11 +224,11 @@ export default function ProjectsManagement() {
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Activity className="h-4 w-4" />
-                          <span>{status === 'active' ? 'Active' : 'Setup Required'}</span>
+                          <span>{project.appEnv || 'production'}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
-                          <span>2 staff</span>
+                          <span>{project.staffCount} staff</span>
                         </div>
                       </div>
                       

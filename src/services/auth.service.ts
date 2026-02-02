@@ -190,3 +190,56 @@ export function getCurrentFirebaseUser(): FirebaseUser | null {
  * Hash password utility (exported for admin use)
  */
 export { hashPassword };
+
+/**
+ * Register a client from an approved lead (admin action)
+ */
+export async function registerClientFromLead(
+  email: string,
+  username: string,
+  password: string
+): Promise<{ userId: string }> {
+  const usernameKey = username.trim().toLowerCase();
+  const emailKey = email.trim().toLowerCase();
+  const passwordHash = await hashPassword(password);
+
+  // Create Firebase Auth user
+  let userCredential;
+  try {
+    userCredential = await createUserWithEmailAndPassword(auth, emailKey, password);
+  } catch (error: any) {
+    if (error?.code === 'auth/email-already-in-use') {
+      throw new Error('Email is already registered');
+    }
+    throw error;
+  }
+
+  const uid = userCredential.user.uid;
+
+  try {
+    // Reserve username + email
+    await reserveUsername(uid, usernameKey);
+    await reserveEmail(uid, emailKey);
+
+    // Create Firestore user doc with 'client' role and 'active' status
+    await createUserInFirestore(uid, {
+      username: usernameKey,
+      email: emailKey,
+      passwordHash,
+      role: 'client' as UserRole,
+      status: 'active',
+    });
+
+    // Sign out immediately (admin shouldn't be signed in as this user)
+    await signOut(auth);
+
+    return { userId: uid };
+  } catch (error: any) {
+    await Promise.allSettled([
+      releaseUsername(usernameKey),
+      releaseEmail(emailKey),
+    ]);
+    await userCredential.user.delete();
+    throw error;
+  }
+}
