@@ -36,6 +36,7 @@ export async function createLead(data: SignupFormData): Promise<string> {
     phone: data.phone,
     source: data.source,
     country: data.country,
+    status: 'pending',
     createdAt: Timestamp.now(),
   };
 
@@ -57,7 +58,42 @@ export async function getAllLeads(): Promise<Lead[]> {
     leadId: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toDate(),
+    updatedAt: doc.data().updatedAt?.toDate(),
   })) as Lead[];
+}
+
+/**
+ * Update lead status
+ */
+export async function updateLeadStatus(
+  leadId: string, 
+  status: 'pending' | 'contacted' | 'approved' | 'rejected',
+  notes?: string
+): Promise<void> {
+  const updateData: Record<string, unknown> = {
+    status,
+    updatedAt: Timestamp.now(),
+  };
+  if (notes !== undefined) {
+    updateData.notes = notes;
+  }
+  await updateDoc(doc(db, 'leads', leadId), updateData);
+}
+
+/**
+ * Get leads count by status
+ */
+export async function getLeadsCountByStatus(): Promise<Record<string, number>> {
+  const snapshot = await getDocs(collection(db, 'leads'));
+  const counts: Record<string, number> = { pending: 0, contacted: 0, approved: 0, rejected: 0, total: 0 };
+  
+  snapshot.docs.forEach(doc => {
+    const status = doc.data().status || 'pending';
+    counts[status] = (counts[status] || 0) + 1;
+    counts.total += 1;
+  });
+  
+  return counts;
 }
 
 /**

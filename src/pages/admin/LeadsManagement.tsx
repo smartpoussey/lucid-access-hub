@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Search, Filter, Eye,
-  Mail, Phone, Globe, Calendar
+  Search, Eye, Check, X, Phone as PhoneIcon,
+  Mail, Globe, Calendar, Loader2, MessageSquare
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -23,46 +26,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getAllLeads } from '@/services/firestore.service';
-import type { Lead } from '@/types';
+import { getAllLeads, updateLeadStatus } from '@/services/firestore.service';
+import { registerClientFromLead } from '@/services/auth.service';
+import { toast } from 'sonner';
+import type { Lead, LeadStatus } from '@/types';
 
 export default function LeadsManagement() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-
-  // Demo data for illustration
-  const demoLeads: Lead[] = [
-    {
-      leadId: '1',
-      name: 'Dr. Sarah Johnson',
-      email: 'sarah@bayareamedical.com',
-      phone: '+1 (555) 123-4567',
-      source: 'google_search',
-      country: 'US',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    },
-    {
-      leadId: '2',
-      name: 'Michael Chen',
-      email: 'mchen@pacificdental.com',
-      phone: '+1 (555) 234-5678',
-      source: 'referral',
-      country: 'US',
-      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-    },
-    {
-      leadId: '3',
-      name: 'Emily Roberts',
-      email: 'emily@sunrisewellness.com',
-      phone: '+1 (555) 345-6789',
-      source: 'social_media',
-      country: 'UK',
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    },
-  ];
+  
+  // Approval dialog state
+  const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
+  const [approvalLead, setApprovalLead] = useState<Lead | null>(null);
+  const [approvalUsername, setApprovalUsername] = useState('');
+  const [approvalPassword, setApprovalPassword] = useState('');
+  const [approvalConfirmPassword, setApprovalConfirmPassword] = useState('');
+  const [isApproving, setIsApproving] = useState(false);
+  
+  // Rejection/Contact dialog state
+  const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
+  const [actionType, setActionType] = useState<'rejected' | 'contacted'>('rejected');
+  const [actionLead, setActionLead] = useState<Lead | null>(null);
+  const [actionNotes, setActionNotes] = useState('');
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
 
   useEffect(() => {
     loadLeads();
@@ -70,16 +60,16 @@ export default function LeadsManagement() {
 
   useEffect(() => {
     filterLeads();
-  }, [leads, searchQuery]);
+  }, [leads, searchQuery, statusFilter]);
 
   const loadLeads = async () => {
     setIsLoading(true);
     try {
       const data = await getAllLeads();
-      setLeads(data.length > 0 ? data : demoLeads);
+      setLeads(data);
     } catch (error) {
       console.error('Error loading leads:', error);
-      setLeads(demoLeads);
+      toast.error('Failed to load leads');
     } finally {
       setIsLoading(false);
     }
@@ -97,10 +87,15 @@ export default function LeadsManagement() {
       );
     }
 
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((lead) => lead.status === statusFilter);
+    }
+
     setFilteredLeads(filtered);
   };
 
   const formatDate = (date: Date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) return 'N/A';
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
@@ -134,6 +129,102 @@ export default function LeadsManagement() {
       other: 'Other',
     };
     return labels[country] || country;
+  };
+
+  const getStatusBadge = (status: LeadStatus) => {
+    switch (status) {
+      case 'pending':
+        return <Badge className="bg-warning/20 text-warning">Pending</Badge>;
+      case 'contacted':
+        return <Badge className="bg-accent/20 text-accent">Contacted</Badge>;
+      case 'approved':
+        return <Badge className="bg-success/20 text-success">Approved</Badge>;
+      case 'rejected':
+        return <Badge className="bg-destructive/20 text-destructive">Rejected</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  // Open approval dialog
+  const openApprovalDialog = (lead: Lead) => {
+    setApprovalLead(lead);
+    setApprovalUsername(lead.email.split('@')[0].replace(/[^a-z0-9]/gi, '_').toLowerCase());
+    setApprovalPassword('');
+    setApprovalConfirmPassword('');
+    setIsApprovalDialogOpen(true);
+  };
+
+  // Handle lead approval with client registration
+  const handleApprove = async () => {
+    if (!approvalLead) return;
+    
+    if (approvalPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    
+    if (approvalPassword !== approvalConfirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
+    if (!approvalUsername.trim()) {
+      toast.error('Username is required');
+      return;
+    }
+
+    setIsApproving(true);
+    try {
+      // Register the client in Firebase Auth and Firestore
+      await registerClientFromLead(
+        approvalLead.email,
+        approvalUsername.trim(),
+        approvalPassword
+      );
+      
+      // Update lead status to approved
+      await updateLeadStatus(approvalLead.leadId, 'approved');
+      
+      toast.success(`${approvalLead.name} has been approved and registered as a client`);
+      setIsApprovalDialogOpen(false);
+      loadLeads();
+    } catch (error: any) {
+      console.error('Error approving lead:', error);
+      toast.error(error?.message || 'Failed to approve lead');
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  // Open rejection/contacted dialog
+  const openActionDialog = (lead: Lead, type: 'rejected' | 'contacted') => {
+    setActionLead(lead);
+    setActionType(type);
+    setActionNotes('');
+    setIsActionDialogOpen(true);
+  };
+
+  // Handle rejection or mark contacted
+  const handleAction = async () => {
+    if (!actionLead) return;
+
+    setIsProcessingAction(true);
+    try {
+      await updateLeadStatus(actionLead.leadId, actionType, actionNotes || undefined);
+      
+      const message = actionType === 'rejected' 
+        ? `${actionLead.name} has been rejected`
+        : `${actionLead.name} has been marked as contacted`;
+      toast.success(message);
+      setIsActionDialogOpen(false);
+      loadLeads();
+    } catch (error: any) {
+      console.error('Error updating lead:', error);
+      toast.error(error?.message || 'Failed to update lead');
+    } finally {
+      setIsProcessingAction(false);
+    }
   };
 
   return (
@@ -174,6 +265,18 @@ export default function LeadsManagement() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-48 bg-secondary border-border">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="contacted">Contacted</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
         </motion.div>
 
         {/* Leads table */}
@@ -190,7 +293,7 @@ export default function LeadsManagement() {
                     <tr>
                       <th className="text-left p-4 font-medium text-muted-foreground">Name</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">Phone</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Country</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Status</th>
                       <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Source</th>
                       <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Date</th>
                       <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
@@ -200,6 +303,7 @@ export default function LeadsManagement() {
                     {isLoading ? (
                       <tr>
                         <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
                           Loading leads...
                         </td>
                       </tr>
@@ -219,22 +323,73 @@ export default function LeadsManagement() {
                             </div>
                           </td>
                           <td className="p-4 text-foreground">{lead.phone}</td>
-                          <td className="p-4 text-muted-foreground hidden md:table-cell">{getCountryLabel(lead.country)}</td>
+                          <td className="p-4 hidden md:table-cell">
+                            {getStatusBadge(lead.status || 'pending')}
+                          </td>
                           <td className="p-4 hidden md:table-cell">
                             <Badge variant="secondary" className="bg-secondary">
                               {getSourceLabel(lead.source)}
                             </Badge>
                           </td>
                           <td className="p-4 text-muted-foreground hidden lg:table-cell">{formatDate(lead.createdAt)}</td>
-                          <td className="p-4 text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedLead(lead)}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
+                          <td className="p-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedLead(lead)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              {(lead.status === 'pending' || !lead.status) && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-accent hover:text-accent"
+                                    onClick={() => openActionDialog(lead, 'contacted')}
+                                  >
+                                    <MessageSquare className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-success hover:text-success"
+                                    onClick={() => openApprovalDialog(lead)}
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                    onClick={() => openActionDialog(lead, 'rejected')}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
+                              {lead.status === 'contacted' && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-success hover:text-success"
+                                    onClick={() => openApprovalDialog(lead)}
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                    onClick={() => openActionDialog(lead, 'rejected')}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -253,12 +408,15 @@ export default function LeadsManagement() {
           <DialogHeader>
             <DialogTitle className="text-foreground">Lead Details</DialogTitle>
             <DialogDescription>
-              View lead information.
+              View lead information and notes.
             </DialogDescription>
           </DialogHeader>
 
           {selectedLead && (
             <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                {getStatusBadge(selectedLead.status || 'pending')}
+              </div>
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex items-start gap-3">
                   <Mail className="h-5 w-5 text-primary mt-0.5" />
@@ -268,7 +426,7 @@ export default function LeadsManagement() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Phone className="h-5 w-5 text-primary mt-0.5" />
+                  <PhoneIcon className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">Phone</p>
                     <p className="text-foreground">{selectedLead.phone}</p>
@@ -294,8 +452,160 @@ export default function LeadsManagement() {
                 <p className="text-sm text-muted-foreground mb-2">Source</p>
                 <Badge variant="secondary">{getSourceLabel(selectedLead.source)}</Badge>
               </div>
+
+              {selectedLead.notes && (
+                <div className="p-4 rounded-lg bg-secondary/50">
+                  <p className="text-sm text-muted-foreground mb-2">Notes</p>
+                  <p className="text-foreground">{selectedLead.notes}</p>
+                </div>
+              )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Approval dialog */}
+      <Dialog open={isApprovalDialogOpen} onOpenChange={setIsApprovalDialogOpen}>
+        <DialogContent className="max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Approve & Register Client</DialogTitle>
+            <DialogDescription>
+              Set login credentials for {approvalLead?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                value={approvalLead?.email || ''}
+                disabled
+                className="bg-secondary"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                value={approvalUsername}
+                onChange={(e) => setApprovalUsername(e.target.value)}
+                placeholder="Enter username"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={approvalPassword}
+                onChange={(e) => setApprovalPassword(e.target.value)}
+                placeholder="Min 8 characters"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={approvalConfirmPassword}
+                onChange={(e) => setApprovalConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsApprovalDialogOpen(false)}
+              disabled={isApproving}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApprove}
+              disabled={isApproving}
+              className="bg-success hover:bg-success/90 text-success-foreground"
+            >
+              {isApproving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Approve & Register
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rejection/Contact dialog */}
+      <Dialog open={isActionDialogOpen} onOpenChange={setIsActionDialogOpen}>
+        <DialogContent className="max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              {actionType === 'rejected' ? 'Reject Lead' : 'Mark as Contacted'}
+            </DialogTitle>
+            <DialogDescription>
+              {actionType === 'rejected' 
+                ? `Reject ${actionLead?.name}'s application`
+                : `Mark ${actionLead?.name} as contacted`
+              }
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (optional)</Label>
+              <Textarea
+                id="notes"
+                value={actionNotes}
+                onChange={(e) => setActionNotes(e.target.value)}
+                placeholder={actionType === 'rejected' 
+                  ? 'Reason for rejection...' 
+                  : 'Contact notes...'
+                }
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsActionDialogOpen(false)}
+              disabled={isProcessingAction}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAction}
+              disabled={isProcessingAction}
+              variant={actionType === 'rejected' ? 'destructive' : 'default'}
+            >
+              {isProcessingAction ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : actionType === 'rejected' ? (
+                <>
+                  <X className="h-4 w-4 mr-2" />
+                  Reject
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Mark Contacted
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
