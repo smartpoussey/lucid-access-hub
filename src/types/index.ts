@@ -1,5 +1,19 @@
-// User Roles
-export type UserRole = 'admin' | 'staff' | 'client' | 'lead';
+// User roles enum
+export type UserRole = 'admin' | 'staff' | 'client';
+
+// Lead status enum
+export type LeadStatus = 'pending' | 'contacted' | 'approved' | 'rejected';
+
+// Assignment status enum
+export type AssignmentStatus = 'active' | 'paused' | 'completed';
+
+// Staff role in project
+export type StaffProjectRole = 'primary' | 'secondary' | 'support';
+
+export type AppEnvironment = 'development' | 'staging' | 'production';
+
+// Access level for admin/staff
+export type AccessLevel = 'full' | 'limited' | 'readonly';
 
 // User Status
 export type UserStatus = 'active' | 'pending' | 'disabled';
@@ -7,51 +21,123 @@ export type UserStatus = 'active' | 'pending' | 'disabled';
 // Project Assignment Status
 export type ProjectAssignmentStatus = 'active' | 'paused' | 'completed';
 
-// Staff Project Role
-export type StaffProjectRole = 'primary' | 'secondary' | 'support';
+// Project Type
+export type ProjectType = 'website' | 'chatbot' | 'ai-agent' | 'appointments' | 'marketing';
 
-// Lead Status
-export type LeadStatus = 'pending' | 'contacted' | 'approved' | 'rejected';
+// Lead form data
+export interface LeadFormData {
+  name: string;
+  email: string;
+  mobile: string;
+  businessName: string;
+  address: string;
+  city: string;
+  reasonForApproaching: string;
+  source: string;
+  status: string;
+}
 
-// Lead interface (pre-registration)
+// Survey form data
+export interface SurveyFormData {
+  hasWebsite: boolean;
+  hasChatbot: boolean;
+  hasAiAgent: boolean;
+  hasReceptionist: boolean;
+  additionalNotes?: string;
+}
+
+// Lead interface
 export interface Lead {
   leadId: string;
   name: string;
   email: string;
-  phone: string;
+  mobile: string;
+  businessName: string;
+  address: string;
+  city: string;
+  reasonForApproaching: string;
   source: string;
-  country: string;
+  hasWebsite: boolean;
+  hasChatbot: boolean;
+  hasAiAgent: boolean;
+  hasReceptionist: boolean;
+  additionalNotes?: string;
   status: LeadStatus;
   createdAt: Date;
-  updatedAt?: Date;
-  notes?: string;
 }
 
 // User interface
 export interface User {
   userId: string;
-  username: string;
   email: string;
-  passwordHash: string;
+  name: string;
   role: UserRole;
   status: UserStatus;
   createdAt: Date;
-  lastLoginAt?: Date;
+  updatedAt: Date;
+  avatarUrl?: string;
+}
+
+// Registration form data types
+export interface AdminRegistrationData {
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  mobile: string;
+  department: string;
+  accessLevel: AccessLevel;
+  backupEmail: string;
+}
+
+// Admin interface
+export interface Admin {
+  adminId: string;
+  employeeId: string;
+  mobile: string;
+  department: string;
+  accessLevel: AccessLevel;
+  backupEmail: string;
+}
+
+// Client registration data
+export interface ClientRegistrationData {
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  mobile: string;
+  businessName: string;
+  address: string;
+  city: string;
+  handlingWebsite: boolean;
+  handlingChatbot: boolean;
+  handlingAiAgent: boolean;
+  handlingAppointments: boolean;
+  handlingMarketing: boolean;
+  additionalNotes?: string;
 }
 
 // Client interface
 export interface Client {
   clientId: string;
-  clientName: string;
+  mobile: string;
+  businessName: string;
+  address: string;
+  city: string;
+  handlingWebsite: boolean;
+  handlingChatbot: boolean;
+  handlingAiAgent: boolean;
+  handlingAppointments: boolean;
+  handlingMarketing: boolean;
+  additionalNotes?: string;
   createdAt: Date;
 }
 
-// Client Project (Multi-tenant)
-export interface ClientProject {
-  clientProjectId: string;
+export interface ClientProjectRegistrationData {
   clientId: string;
   appName: string;
-  appEnv: string;
+  appEnv: AppEnvironment;
   projectName: string;
   apiKey: string;
   authDomain: string;
@@ -59,22 +145,53 @@ export interface ClientProject {
   storageBucket: string;
   messagingSenderId: string;
   appId: string;
-  measurementId?: string;
+  measurementId: string;
+}
+
+// Client Project (Multi-tenant)
+export interface ClientProject {
+  clientProjectId: string;
+  clientId: string;
+  appName: string;
+  appEnv: AppEnvironment;
+  projectName: string;
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId: string;
   createdAt: Date;
+}
+
+export interface StaffRegistrationData {
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  mobile: string;
+  department: string;
+  accessLevel: AccessLevel;
+  position?: string;
 }
 
 // Staff interface
 export interface Staff {
   staffId: string;
-  staffName: string;
-  createdAt: Date;
+  employeeId: string;
+  mobile: string;
+  department: string;
+  accessLevel: AccessLevel;
+  position?: string;
 }
 
 // Staff-Client Project Mapping
 export interface StaffClientProject {
   staffId: string;
   clientProjectId: string;
-  assignmentStatus: ProjectAssignmentStatus;
+  projectType: ProjectType;
+  projectStatus: ProjectAssignmentStatus;
   staffRole: StaffProjectRole;
   assignedAt: Date;
   notes?: string;
@@ -89,9 +206,9 @@ export interface LoginFormData {
 export interface SignupFormData {
   name: string;
   email: string;
-  phone: string;
+  mobile: string;
   source: string;
-  country: string;
+  city: string;
 }
 
 export interface RegisterFormData {

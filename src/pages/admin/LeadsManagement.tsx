@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Search, Eye, Check, X, Phone as PhoneIcon,
-  Mail, Globe, Calendar, Loader2, MessageSquare
+  Mail, MapPin, Calendar, Loader2, MessageSquare, Building
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -42,7 +42,6 @@ export default function LeadsManagement() {
   // Approval dialog state
   const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
   const [approvalLead, setApprovalLead] = useState<Lead | null>(null);
-  const [approvalUsername, setApprovalUsername] = useState('');
   const [approvalPassword, setApprovalPassword] = useState('');
   const [approvalConfirmPassword, setApprovalConfirmPassword] = useState('');
   const [isApproving, setIsApproving] = useState(false);
@@ -83,7 +82,8 @@ export default function LeadsManagement() {
       filtered = filtered.filter(
         (lead) =>
           lead.name.toLowerCase().includes(query) ||
-          lead.email.toLowerCase().includes(query)
+          lead.email.toLowerCase().includes(query) ||
+          lead.businessName?.toLowerCase().includes(query)
       );
     }
 
@@ -117,20 +117,6 @@ export default function LeadsManagement() {
     return labels[source] || source;
   };
 
-  const getCountryLabel = (country: string) => {
-    const labels: Record<string, string> = {
-      US: 'United States',
-      UK: 'United Kingdom',
-      CA: 'Canada',
-      AU: 'Australia',
-      IN: 'India',
-      DE: 'Germany',
-      FR: 'France',
-      other: 'Other',
-    };
-    return labels[country] || country;
-  };
-
   const getStatusBadge = (status: LeadStatus) => {
     switch (status) {
       case 'pending':
@@ -149,7 +135,6 @@ export default function LeadsManagement() {
   // Open approval dialog
   const openApprovalDialog = (lead: Lead) => {
     setApprovalLead(lead);
-    setApprovalUsername(lead.email.split('@')[0].replace(/[^a-z0-9]/gi, '_').toLowerCase());
     setApprovalPassword('');
     setApprovalConfirmPassword('');
     setIsApprovalDialogOpen(true);
@@ -168,18 +153,13 @@ export default function LeadsManagement() {
       toast.error('Passwords do not match');
       return;
     }
-    
-    if (!approvalUsername.trim()) {
-      toast.error('Username is required');
-      return;
-    }
 
     setIsApproving(true);
     try {
       // Register the client in Firebase Auth and Firestore
       await registerClientFromLead(
         approvalLead.email,
-        approvalUsername.trim(),
+        approvalLead.name,
         approvalPassword
       );
       
@@ -259,7 +239,7 @@ export default function LeadsManagement() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name or email..."
+              placeholder="Search by name, email, or business..."
               className="pl-10 bg-secondary border-border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -292,7 +272,7 @@ export default function LeadsManagement() {
                   <thead className="border-b border-border">
                     <tr>
                       <th className="text-left p-4 font-medium text-muted-foreground">Name</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">Phone</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground">Business</th>
                       <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Status</th>
                       <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Source</th>
                       <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Date</th>
@@ -322,7 +302,10 @@ export default function LeadsManagement() {
                               <p className="text-sm text-muted-foreground">{lead.email}</p>
                             </div>
                           </td>
-                          <td className="p-4 text-foreground">{lead.phone}</td>
+                          <td className="p-4">
+                            <p className="text-foreground">{lead.businessName || 'N/A'}</p>
+                            <p className="text-sm text-muted-foreground">{lead.city}</p>
+                          </td>
                           <td className="p-4 hidden md:table-cell">
                             {getStatusBadge(lead.status || 'pending')}
                           </td>
@@ -429,14 +412,21 @@ export default function LeadsManagement() {
                   <PhoneIcon className="h-5 w-5 text-primary mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="text-foreground">{selectedLead.phone}</p>
+                    <p className="text-foreground">{selectedLead.mobile}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Globe className="h-5 w-5 text-primary mt-0.5" />
+                  <Building className="h-5 w-5 text-primary mt-0.5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Country</p>
-                    <p className="text-foreground">{getCountryLabel(selectedLead.country)}</p>
+                    <p className="text-sm text-muted-foreground">Business</p>
+                    <p className="text-foreground">{selectedLead.businessName || 'N/A'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Location</p>
+                    <p className="text-foreground">{selectedLead.city}{selectedLead.address ? `, ${selectedLead.address}` : ''}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -453,12 +443,33 @@ export default function LeadsManagement() {
                 <Badge variant="secondary">{getSourceLabel(selectedLead.source)}</Badge>
               </div>
 
-              {selectedLead.notes && (
+              {selectedLead.reasonForApproaching && (
                 <div className="p-4 rounded-lg bg-secondary/50">
-                  <p className="text-sm text-muted-foreground mb-2">Notes</p>
-                  <p className="text-foreground">{selectedLead.notes}</p>
+                  <p className="text-sm text-muted-foreground mb-2">Reason for Approaching</p>
+                  <p className="text-foreground">{selectedLead.reasonForApproaching}</p>
                 </div>
               )}
+
+              {selectedLead.additionalNotes && (
+                <div className="p-4 rounded-lg bg-secondary/50">
+                  <p className="text-sm text-muted-foreground mb-2">Additional Notes</p>
+                  <p className="text-foreground">{selectedLead.additionalNotes}</p>
+                </div>
+              )}
+
+              {/* Survey Info */}
+              <div className="p-4 rounded-lg bg-secondary/50">
+                <p className="text-sm text-muted-foreground mb-2">Current Setup</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedLead.hasWebsite && <Badge variant="outline">Has Website</Badge>}
+                  {selectedLead.hasChatbot && <Badge variant="outline">Has Chatbot</Badge>}
+                  {selectedLead.hasAiAgent && <Badge variant="outline">Has AI Agent</Badge>}
+                  {selectedLead.hasReceptionist && <Badge variant="outline">Has Receptionist</Badge>}
+                  {!selectedLead.hasWebsite && !selectedLead.hasChatbot && !selectedLead.hasAiAgent && !selectedLead.hasReceptionist && (
+                    <span className="text-muted-foreground text-sm">No current setup specified</span>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </DialogContent>
@@ -485,12 +496,12 @@ export default function LeadsManagement() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
-                id="username"
-                value={approvalUsername}
-                onChange={(e) => setApprovalUsername(e.target.value)}
-                placeholder="Enter username"
+                id="name"
+                value={approvalLead?.name || ''}
+                disabled
+                className="bg-secondary"
               />
             </div>
             <div className="space-y-2">
