@@ -18,10 +18,14 @@ import type {
   User, 
   Client,
   Staff,
+  Admin,
   ClientProject, 
   StaffClientProject, 
   UserRole, 
-  SignupFormData 
+  SignupFormData,
+  LeadStatus,
+  UserStatus,
+  AccessLevel,
 } from '@/types';
 
 // ==================== LEADS ====================
@@ -33,10 +37,17 @@ export async function createLead(data: SignupFormData): Promise<string> {
   const leadData = {
     name: data.name,
     email: data.email,
-    phone: data.phone,
+    mobile: data.mobile,
+    businessName: '',
+    address: '',
+    city: data.city,
+    reasonForApproaching: '',
     source: data.source,
-    country: data.country,
-    status: 'pending',
+    hasWebsite: false,
+    hasChatbot: false,
+    hasAiAgent: false,
+    hasReceptionist: false,
+    status: 'pending' as LeadStatus,
     createdAt: Timestamp.now(),
   };
 
@@ -54,12 +65,27 @@ export async function getAllLeads(): Promise<Lead[]> {
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    leadId: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate(),
-    updatedAt: doc.data().updatedAt?.toDate(),
-  })) as Lead[];
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      leadId: doc.id,
+      name: data.name || '',
+      email: data.email || '',
+      mobile: data.mobile || data.phone || '',
+      businessName: data.businessName || '',
+      address: data.address || '',
+      city: data.city || data.country || '',
+      reasonForApproaching: data.reasonForApproaching || '',
+      source: data.source || '',
+      hasWebsite: data.hasWebsite || false,
+      hasChatbot: data.hasChatbot || false,
+      hasAiAgent: data.hasAiAgent || false,
+      hasReceptionist: data.hasReceptionist || false,
+      additionalNotes: data.additionalNotes || data.notes,
+      status: data.status || 'pending',
+      createdAt: data.createdAt?.toDate() || new Date(),
+    } as Lead;
+  });
 }
 
 /**
@@ -67,7 +93,7 @@ export async function getAllLeads(): Promise<Lead[]> {
  */
 export async function updateLeadStatus(
   leadId: string, 
-  status: 'pending' | 'contacted' | 'approved' | 'rejected',
+  status: LeadStatus,
   notes?: string
 ): Promise<void> {
   const updateData: Record<string, unknown> = {
@@ -75,7 +101,7 @@ export async function updateLeadStatus(
     updatedAt: Timestamp.now(),
   };
   if (notes !== undefined) {
-    updateData.notes = notes;
+    updateData.additionalNotes = notes;
   }
   await updateDoc(doc(db, 'leads', leadId), updateData);
 }
@@ -106,29 +132,6 @@ export async function deleteLead(leadId: string): Promise<void> {
 // ==================== USERS ====================
 
 /**
- * Get user by username
- */
-export async function getUserByUsername(username: string): Promise<User | null> {
-  const q = query(
-    collection(db, 'users'),
-    where('username', '==', username)
-  );
-  
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) {
-    return null;
-  }
-  
-  const doc = snapshot.docs[0];
-  return {
-    userId: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate(),
-    lastLoginAt: doc.data().lastLoginAt?.toDate(),
-  } as User;
-}
-
-/**
  * Get user by email
  */
 export async function getUserByEmail(email: string): Promise<User | null> {
@@ -142,21 +145,18 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     return null;
   }
   
-  const doc = snapshot.docs[0];
+  const docData = snapshot.docs[0];
+  const data = docData.data();
   return {
-    userId: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate(),
-    lastLoginAt: doc.data().lastLoginAt?.toDate(),
+    userId: docData.id,
+    email: data.email || '',
+    name: data.name || data.username || '',
+    role: data.role || 'client',
+    status: data.status || 'pending',
+    createdAt: data.createdAt?.toDate() || new Date(),
+    updatedAt: data.updatedAt?.toDate() || new Date(),
+    avatarUrl: data.avatarUrl,
   } as User;
-}
-
-/**
- * Check if username exists
- */
-export async function isUsernameAvailable(username: string): Promise<boolean> {
-  const user = await getUserByUsername(username);
-  return user === null;
 }
 
 /**
@@ -168,26 +168,7 @@ export async function isEmailAvailable(email: string): Promise<boolean> {
 }
 
 /**
- * Reserve a username (use a normalized key, e.g. lowercase)
- *
- * Uses collection: usernames/{usernameKey}
- */
-export async function reserveUsername(userId: string, usernameKey: string): Promise<void> {
-  await setDoc(doc(db, 'usernames', usernameKey), {
-    userId,
-    username: usernameKey,
-    createdAt: Timestamp.now(),
-  });
-}
-
-export async function releaseUsername(usernameKey: string): Promise<void> {
-  await deleteDoc(doc(db, 'usernames', usernameKey));
-}
-
-/**
  * Reserve an email (use a normalized key, e.g. lowercase)
- *
- * Uses collection: emails/{emailKey}
  */
 export async function reserveEmail(userId: string, emailKey: string): Promise<void> {
   await setDoc(doc(db, 'emails', emailKey), {
@@ -207,20 +188,20 @@ export async function releaseEmail(emailKey: string): Promise<void> {
 export async function createUserWithId(
   userId: string,
   data: {
-    username: string;
+    name: string;
     email: string;
-    passwordHash: string;
     role: UserRole;
-    status: 'active' | 'pending' | 'disabled';
+    status: UserStatus;
   }
 ): Promise<string> {
+  const now = Timestamp.now();
   const userData = {
-    username: data.username,
+    name: data.name,
     email: data.email,
-    passwordHash: data.passwordHash,
     role: data.role,
     status: data.status,
-    createdAt: Timestamp.now(),
+    createdAt: now,
+    updatedAt: now,
   };
 
   await setDoc(doc(db, 'users', userId), userData);
@@ -231,19 +212,19 @@ export async function createUserWithId(
  * Create new user (auto id)
  */
 export async function createUser(data: {
-  username: string;
+  name: string;
   email: string;
-  passwordHash: string;
   role: UserRole;
-  status: 'active' | 'pending' | 'disabled';
+  status: UserStatus;
 }): Promise<string> {
+  const now = Timestamp.now();
   const userData = {
-    username: data.username,
+    name: data.name,
     email: data.email,
-    passwordHash: data.passwordHash,
     role: data.role,
     status: data.status,
-    createdAt: Timestamp.now(),
+    createdAt: now,
+    updatedAt: now,
   };
 
   const docRef = await addDoc(collection(db, 'users'), userData);
@@ -256,6 +237,7 @@ export async function createUser(data: {
 export async function updateUserLastLogin(userId: string): Promise<void> {
   await updateDoc(doc(db, 'users', userId), {
     lastLoginAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   });
 }
 
@@ -269,12 +251,19 @@ export async function getAllUsers(): Promise<User[]> {
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    userId: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate(),
-    lastLoginAt: doc.data().lastLoginAt?.toDate(),
-  })) as User[];
+  return snapshot.docs.map(docSnap => {
+    const data = docSnap.data();
+    return {
+      userId: docSnap.id,
+      email: data.email || '',
+      name: data.name || data.username || '',
+      role: data.role || 'client',
+      status: data.status || 'pending',
+      createdAt: data.createdAt?.toDate() || new Date(),
+      updatedAt: data.updatedAt?.toDate() || new Date(),
+      avatarUrl: data.avatarUrl,
+    } as User;
+  });
 }
 
 /**
@@ -288,12 +277,19 @@ export async function getUsersByRole(role: UserRole): Promise<User[]> {
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    userId: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate(),
-    lastLoginAt: doc.data().lastLoginAt?.toDate(),
-  })) as User[];
+  return snapshot.docs.map(docSnap => {
+    const data = docSnap.data();
+    return {
+      userId: docSnap.id,
+      email: data.email || '',
+      name: data.name || data.username || '',
+      role: data.role || 'client',
+      status: data.status || 'pending',
+      createdAt: data.createdAt?.toDate() || new Date(),
+      updatedAt: data.updatedAt?.toDate() || new Date(),
+      avatarUrl: data.avatarUrl,
+    } as User;
+  });
 }
 
 /**
@@ -303,7 +299,10 @@ export async function updateUser(
   userId: string, 
   data: Partial<Omit<User, 'userId' | 'createdAt'>>
 ): Promise<void> {
-  await updateDoc(doc(db, 'users', userId), data);
+  await updateDoc(doc(db, 'users', userId), {
+    ...data,
+    updatedAt: Timestamp.now(),
+  });
 }
 
 /**
@@ -313,14 +312,47 @@ export async function deleteUser(userId: string): Promise<void> {
   await deleteDoc(doc(db, 'users', userId));
 }
 
+// ==================== ADMINS ====================
+
+/**
+ * Create admin profile
+ */
+export async function createAdmin(adminId: string, data: Omit<Admin, 'adminId'>): Promise<void> {
+  await setDoc(doc(db, 'admins', adminId), {
+    ...data,
+    createdAt: Timestamp.now(),
+  });
+}
+
+/**
+ * Get admin by ID
+ */
+export async function getAdmin(adminId: string): Promise<Admin | null> {
+  const docSnap = await getDoc(doc(db, 'admins', adminId));
+  
+  if (!docSnap.exists()) {
+    return null;
+  }
+  
+  const data = docSnap.data();
+  return {
+    adminId: docSnap.id,
+    employeeId: data.employeeId || '',
+    mobile: data.mobile || '',
+    department: data.department || '',
+    accessLevel: data.accessLevel || 'readonly',
+    backupEmail: data.backupEmail || '',
+  } as Admin;
+}
+
 // ==================== CLIENTS ====================
 
 /**
- * Create client
+ * Create client profile
  */
-export async function createClient(clientId: string, clientName: string): Promise<void> {
-  await updateDoc(doc(db, 'clients', clientId), {
-    clientName,
+export async function createClient(clientId: string, data: Omit<Client, 'clientId' | 'createdAt'>): Promise<void> {
+  await setDoc(doc(db, 'clients', clientId), {
+    ...data,
     createdAt: Timestamp.now(),
   });
 }
@@ -335,21 +367,31 @@ export async function getClient(clientId: string): Promise<Client | null> {
     return null;
   }
   
+  const data = docSnap.data();
   return {
     clientId: docSnap.id,
-    ...docSnap.data(),
-    createdAt: docSnap.data().createdAt?.toDate(),
+    mobile: data.mobile || '',
+    businessName: data.businessName || data.clientName || '',
+    address: data.address || '',
+    city: data.city || '',
+    handlingWebsite: data.handlingWebsite || false,
+    handlingChatbot: data.handlingChatbot || false,
+    handlingAiAgent: data.handlingAiAgent || false,
+    handlingAppointments: data.handlingAppointments || false,
+    handlingMarketing: data.handlingMarketing || false,
+    additionalNotes: data.additionalNotes,
+    createdAt: data.createdAt?.toDate() || new Date(),
   } as Client;
 }
 
 // ==================== STAFF ====================
 
 /**
- * Create staff
+ * Create staff profile
  */
-export async function createStaff(staffId: string, staffName: string): Promise<void> {
-  await updateDoc(doc(db, 'staff', staffId), {
-    staffName,
+export async function createStaff(staffId: string, data: Omit<Staff, 'staffId'>): Promise<void> {
+  await setDoc(doc(db, 'staff', staffId), {
+    ...data,
     createdAt: Timestamp.now(),
   });
 }
@@ -364,10 +406,14 @@ export async function getStaff(staffId: string): Promise<Staff | null> {
     return null;
   }
   
+  const data = docSnap.data();
   return {
     staffId: docSnap.id,
-    ...docSnap.data(),
-    createdAt: docSnap.data().createdAt?.toDate(),
+    employeeId: data.employeeId || '',
+    mobile: data.mobile || '',
+    department: data.department || '',
+    accessLevel: data.accessLevel || 'readonly',
+    position: data.position,
   } as Staff;
 }
 
@@ -382,7 +428,7 @@ export async function createClientProject(
   firebaseConfig?: {
     apiKey?: string;
     authDomain?: string;
-    firebaseProjectId?: string;
+    projectId?: string;
     storageBucket?: string;
     messagingSenderId?: string;
     appId?: string;
@@ -392,9 +438,11 @@ export async function createClientProject(
   const projectData = {
     clientId,
     projectName,
+    appName: projectName,
+    appEnv: 'development',
     apiKey: firebaseConfig?.apiKey || '',
     authDomain: firebaseConfig?.authDomain || '',
-    firebaseProjectId: firebaseConfig?.firebaseProjectId || '',
+    projectId: firebaseConfig?.projectId || '',
     storageBucket: firebaseConfig?.storageBucket || '',
     messagingSenderId: firebaseConfig?.messagingSenderId || '',
     appId: firebaseConfig?.appId || '',
@@ -417,11 +465,24 @@ export async function getClientProjects(clientId: string): Promise<ClientProject
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    clientProjectId: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate(),
-  })) as ClientProject[];
+  return snapshot.docs.map(docSnap => {
+    const data = docSnap.data();
+    return {
+      clientProjectId: docSnap.id,
+      clientId: data.clientId,
+      appName: data.appName || data.projectName || '',
+      appEnv: data.appEnv || 'development',
+      projectName: data.projectName || '',
+      apiKey: data.apiKey || '',
+      authDomain: data.authDomain || '',
+      projectId: data.projectId || data.firebaseProjectId || '',
+      storageBucket: data.storageBucket || '',
+      messagingSenderId: data.messagingSenderId || '',
+      appId: data.appId || '',
+      measurementId: data.measurementId || '',
+      createdAt: data.createdAt?.toDate() || new Date(),
+    } as ClientProject;
+  });
 }
 
 // Alias for getClientProjects - used by useClientProjects hook
@@ -437,11 +498,24 @@ export async function getAllClientProjects(): Promise<ClientProject[]> {
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    clientProjectId: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate(),
-  })) as ClientProject[];
+  return snapshot.docs.map(docSnap => {
+    const data = docSnap.data();
+    return {
+      clientProjectId: docSnap.id,
+      clientId: data.clientId,
+      appName: data.appName || data.projectName || '',
+      appEnv: data.appEnv || 'development',
+      projectName: data.projectName || '',
+      apiKey: data.apiKey || '',
+      authDomain: data.authDomain || '',
+      projectId: data.projectId || data.firebaseProjectId || '',
+      storageBucket: data.storageBucket || '',
+      messagingSenderId: data.messagingSenderId || '',
+      appId: data.appId || '',
+      measurementId: data.measurementId || '',
+      createdAt: data.createdAt?.toDate() || new Date(),
+    } as ClientProject;
+  });
 }
 
 /**
@@ -464,10 +538,21 @@ export async function getClientProject(projectId: string): Promise<ClientProject
     return null;
   }
   
+  const data = docSnap.data();
   return {
     clientProjectId: docSnap.id,
-    ...docSnap.data(),
-    createdAt: docSnap.data().createdAt?.toDate(),
+    clientId: data.clientId,
+    appName: data.appName || data.projectName || '',
+    appEnv: data.appEnv || 'development',
+    projectName: data.projectName || '',
+    apiKey: data.apiKey || '',
+    authDomain: data.authDomain || '',
+    projectId: data.projectId || data.firebaseProjectId || '',
+    storageBucket: data.storageBucket || '',
+    messagingSenderId: data.messagingSenderId || '',
+    appId: data.appId || '',
+    measurementId: data.measurementId || '',
+    createdAt: data.createdAt?.toDate() || new Date(),
   } as ClientProject;
 }
 
@@ -480,12 +565,14 @@ export async function assignStaffToProject(
   staffId: string,
   clientProjectId: string,
   staffRole: 'primary' | 'secondary' | 'support',
+  projectType: 'website' | 'chatbot' | 'ai-agent' | 'appointments' | 'marketing',
   notes?: string
 ): Promise<void> {
   await addDoc(collection(db, 'staffClientProjects'), {
     staffId,
     clientProjectId,
-    assignmentStatus: 'active',
+    projectType,
+    projectStatus: 'active',
     staffRole,
     notes,
     assignedAt: Timestamp.now(),
@@ -499,14 +586,22 @@ export async function getStaffAssignments(staffId: string): Promise<StaffClientP
   const q = query(
     collection(db, 'staffClientProjects'),
     where('staffId', '==', staffId),
-    where('assignmentStatus', '==', 'active')
+    where('projectStatus', '==', 'active')
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    ...doc.data(),
-    assignedAt: doc.data().assignedAt?.toDate(),
-  })) as StaffClientProject[];
+  return snapshot.docs.map(docSnap => {
+    const data = docSnap.data();
+    return {
+      staffId: data.staffId,
+      clientProjectId: data.clientProjectId,
+      projectType: data.projectType || 'website',
+      projectStatus: data.projectStatus || data.assignmentStatus || 'active',
+      staffRole: data.staffRole || 'support',
+      assignedAt: data.assignedAt?.toDate() || new Date(),
+      notes: data.notes,
+    } as StaffClientProject;
+  });
 }
 
 /**
@@ -516,14 +611,22 @@ export async function getProjectStaff(clientProjectId: string): Promise<StaffCli
   const q = query(
     collection(db, 'staffClientProjects'),
     where('clientProjectId', '==', clientProjectId),
-    where('assignmentStatus', '==', 'active')
+    where('projectStatus', '==', 'active')
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    ...doc.data(),
-    assignedAt: doc.data().assignedAt?.toDate(),
-  })) as StaffClientProject[];
+  return snapshot.docs.map(docSnap => {
+    const data = docSnap.data();
+    return {
+      staffId: data.staffId,
+      clientProjectId: data.clientProjectId,
+      projectType: data.projectType || 'website',
+      projectStatus: data.projectStatus || data.assignmentStatus || 'active',
+      staffRole: data.staffRole || 'support',
+      assignedAt: data.assignedAt?.toDate() || new Date(),
+      notes: data.notes,
+    } as StaffClientProject;
+  });
 }
 
 /**

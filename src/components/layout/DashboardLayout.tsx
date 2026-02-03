@@ -70,8 +70,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     navigate('/');
   };
 
-  const getInitials = (username: string) => {
-    return username.slice(0, 2).toUpperCase();
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   };
 
   return (
@@ -115,12 +120,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-sidebar-accent transition-colors">
                 <Avatar className="h-9 w-9">
                   <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-sm">
-                    {user?.username ? getInitials(user.username) : 'U'}
+                    {user?.name ? getInitials(user.name) : 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-sidebar-foreground truncate">
-                    {user?.username}
+                    {user?.name || user?.email}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {user?.role}
@@ -227,7 +232,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </Link>
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                {user?.username ? getInitials(user.username) : 'U'}
+                {user?.name ? getInitials(user.name) : 'U'}
               </AvatarFallback>
             </Avatar>
           </div>

@@ -20,9 +20,9 @@ import { useToast } from '@/hooks/use-toast';
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
   email: z.string().email('Please enter a valid email address').max(255),
-  phone: z.string().min(10, 'Please enter a valid phone number').max(20),
+  mobile: z.string().min(10, 'Please enter a valid phone number').max(20),
   source: z.string().min(1, 'Please select how you heard about us'),
-  country: z.string().min(2, 'Please select your country').max(100),
+  city: z.string().min(2, 'Please enter your city').max(100),
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -33,17 +33,6 @@ const sourceOptions = [
   { value: 'referral', label: 'Referral from a friend/colleague' },
   { value: 'advertisement', label: 'Advertisement' },
   { value: 'conference', label: 'Conference/Event' },
-  { value: 'other', label: 'Other' },
-];
-
-const countryOptions = [
-  { value: 'US', label: 'United States' },
-  { value: 'UK', label: 'United Kingdom' },
-  { value: 'CA', label: 'Canada' },
-  { value: 'AU', label: 'Australia' },
-  { value: 'IN', label: 'India' },
-  { value: 'DE', label: 'Germany' },
-  { value: 'FR', label: 'France' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -71,9 +60,9 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       await createLead({
         name: data.name,
         email: data.email,
-        phone: data.phone,
+        mobile: data.mobile,
         source: data.source,
-        country: data.country,
+        city: data.city,
       });
       toast({
         title: 'Application Submitted!',
@@ -128,38 +117,31 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
+          <Label htmlFor="mobile">Phone Number</Label>
           <div className="relative">
             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              id="phone"
+              id="mobile"
               placeholder="+1 (555) 000-0000"
               className="pl-10 bg-secondary border-border"
-              {...register('phone')}
+              {...register('mobile')}
             />
           </div>
-          {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+          {errors.mobile && <p className="text-sm text-destructive">{errors.mobile.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="country">Country</Label>
-          <Select
-            onValueChange={(value) => setValue('country', value)}
-            defaultValue={watch('country')}
-          >
-            <SelectTrigger className="bg-secondary border-border">
-              <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Select your country" />
-            </SelectTrigger>
-            <SelectContent>
-              {countryOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.country && <p className="text-sm text-destructive">{errors.country.message}</p>}
+          <Label htmlFor="city">City</Label>
+          <div className="relative">
+            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="city"
+              placeholder="Enter your city"
+              className="pl-10 bg-secondary border-border"
+              {...register('city')}
+            />
+          </div>
+          {errors.city && <p className="text-sm text-destructive">{errors.city.message}</p>}
         </div>
 
         <div className="space-y-2">

@@ -71,7 +71,7 @@ export default function UsersManagement() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (user) =>
-          user.username.toLowerCase().includes(query) ||
+          user.name?.toLowerCase().includes(query) ||
           user.email.toLowerCase().includes(query)
       );
     }
@@ -87,8 +87,13 @@ export default function UsersManagement() {
     setFilteredUsers(filtered);
   };
 
-  const getInitials = (username: string) => {
-    return username.slice(0, 2).toUpperCase();
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
   };
 
   const getRoleBadgeColor = (role: UserRole) => {
@@ -219,7 +224,7 @@ export default function UsersManagement() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by username or email..."
+              placeholder="Search by name or email..."
               className="pl-10 bg-secondary border-border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -262,11 +267,11 @@ export default function UsersManagement() {
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12">
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {getInitials(user.username)}
+                          {getInitials(user.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-medium text-foreground">{user.username}</h3>
+                        <h3 className="font-medium text-foreground">{user.name || 'Unnamed User'}</h3>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
