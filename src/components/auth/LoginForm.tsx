@@ -4,50 +4,38 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.string().email('Enter a valid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormInput = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInput>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormInput) => {
     setIsSubmitting(true);
-    try {
-      await login(data.email, data.password);
-      toast({
-        title: 'Welcome back!',
-        description: 'You have successfully signed in.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Sign in failed',
-        description: error instanceof Error ? error.message : 'Invalid credentials. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
+    const result = await login(data.email, data.password);
+    if (!result.success) {
+      toast({ title: 'Login failed', description: result.error || 'Try again', variant: 'destructive' });
+    } else {
+      toast({ title: 'Login successful', description: 'Welcome back!' });
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -64,14 +52,12 @@ export function LoginForm() {
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
-              {...register('email')}
+              placeholder="you@example.com"
               className="h-12 pl-10"
+              {...register('email')}
             />
           </div>
-          {errors.email && (
-            <p className="text-sm text-destructive">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -81,8 +67,8 @@ export function LoginForm() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter your password"
-              {...register('password')}
               className="h-12 pr-12"
+              {...register('password')}
             />
             <button
               type="button"
@@ -92,9 +78,7 @@ export function LoginForm() {
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
-          {errors.password && (
-            <p className="text-sm text-destructive">{errors.password.message}</p>
-          )}
+          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
         </div>
 
         <Button

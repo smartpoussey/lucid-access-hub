@@ -27,9 +27,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getAllLeads, updateLeadStatus } from '@/services/firestore.service';
-import { registerClientFromLead } from '@/services/auth.service';
+import { registerWithRole } from '@/services/auth.service';
 import { toast } from 'sonner';
-import type { Lead, LeadStatus } from '@/types';
+import type { Lead, LeadStatus, ClientRegistrationData } from '@/types';
 
 export default function LeadsManagement() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -156,12 +156,35 @@ export default function LeadsManagement() {
 
     setIsApproving(true);
     try {
+      // Build client profile data from lead
+      const clientData: ClientRegistrationData = {
+        name: approvalLead.name,
+        email: approvalLead.email,
+        role: 'client',
+        status: 'active',
+        mobile: approvalLead.mobile || '',
+        businessName: approvalLead.businessName || '',
+        address: approvalLead.address || '',
+        city: approvalLead.city || '',
+        handlingWebsite: approvalLead.hasWebsite || false,
+        handlingChatbot: approvalLead.hasChatbot || false,
+        handlingAiAgent: approvalLead.hasAiAgent || false,
+        handlingAppointments: approvalLead.hasReceptionist || false,
+        handlingMarketing: false,
+        additionalNotes: approvalLead.additionalNotes,
+      };
+
       // Register the client in Firebase Auth and Firestore
-      await registerClientFromLead(
+      const result = await registerWithRole(
         approvalLead.email,
-        approvalLead.name,
-        approvalPassword
+        approvalPassword,
+        'client',
+        clientData
       );
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to register client');
+      }
       
       // Update lead status to approved
       await updateLeadStatus(approvalLead.leadId, 'approved');
@@ -191,7 +214,7 @@ export default function LeadsManagement() {
 
     setIsProcessingAction(true);
     try {
-      await updateLeadStatus(actionLead.leadId, actionType, actionNotes || undefined);
+      await updateLeadStatus(actionLead.leadId, actionType);
       
       const message = actionType === 'rejected' 
         ? `${actionLead.name} has been rejected`

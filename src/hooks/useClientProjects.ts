@@ -57,10 +57,7 @@ export function useClientProjects() {
       initializeClientProjectFirebase(project.clientProjectId, config);
       
       // List available collections
-      const collectionNames = await listClientProjectCollections(
-        project.clientProjectId,
-        config
-      );
+      const collectionNames = await listClientProjectCollections(project);
       
       setCollections(collectionNames);
     } catch (err) {

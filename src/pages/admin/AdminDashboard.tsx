@@ -7,7 +7,7 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { getAllLeads, getAllUsers, getAllClientProjects, getLeadsCountByStatus } from '@/services/firestore.service';
+import { getAllLeads, getAllUsers, getAllClientProjects, getLeadsByStatus } from '@/services/firestore.service';
 import type { Lead, User } from '@/types';
 
 interface DashboardStats {
@@ -38,11 +38,11 @@ export default function AdminDashboard() {
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [leads, users, projects, leadsCount] = await Promise.all([
+      const [leads, users, projects, pendingLeads] = await Promise.all([
         getAllLeads(),
         getAllUsers(),
         getAllClientProjects(),
-        getLeadsCountByStatus(),
+        getLeadsByStatus('pending'),
       ]);
 
       // Calculate stats
@@ -60,8 +60,8 @@ export default function AdminDashboard() {
       const activeUsers = users.filter(u => u.status === 'active').length;
 
       setStats({
-        totalLeads: leadsCount.total || leads.length,
-        pendingLeads: leadsCount.pending || 0,
+        totalLeads: leads.length,
+        pendingLeads: pendingLeads.length,
         activeUsers,
         activeProjects: projects.length,
         leadsThisMonth,

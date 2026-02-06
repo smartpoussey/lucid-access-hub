@@ -1,19 +1,28 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User } from '@/types';
+import type { User, UserRole, AdminRegistrationData, StaffRegistrationData, ClientRegistrationData } from '@/types';
 import { 
-  signInWithCredentials, 
+  loginWithEmail,
   signOutUser,
   getStoredUser,
   storeUser,
   clearStoredUser,
+  subscribeToAuthState,
+  registerWithRole,
 } from '@/services/auth.service';
+import { getUserById } from '@/services/firestore.service';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  registerWithEmail: (
+    email: string, 
+    password: string, 
+    role: UserRole, 
+    profileData: AdminRegistrationData | StaffRegistrationData | ClientRegistrationData
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,14 +38,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(storedUser);
     }
     setIsLoading(false);
+
+    // Subscribe to auth state changes
+    const unsubscribe = subscribeToAuthState(async (firebaseUser) => {
+      if (firebaseUser && firebaseUser.emailVerified) {
+        // Fetch user data from Firestore
+        const userData = await getUserById(firebaseUser.uid);
+        if (userData) {
+          storeUser(userData);
+          setUser(userData);
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     try {
-      const userData = await signInWithCredentials(email, password);
+      const firebaseUser = await loginWithEmail(email, password);
+      const userData = await getUserById(firebaseUser.uid);
+      
+      if (!userData) {
+        await signOutUser();
+        return { success: false, error: 'User profile not found.' };
+      }
+
       storeUser(userData);
       setUser(userData);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
     } finally {
       setIsLoading(false);
     }
@@ -48,12 +81,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const registerWithEmailHandler = useCallback(async (
+    email: string,
+    password: string,
+    role: UserRole,
+    profileData: AdminRegistrationData | StaffRegistrationData | ClientRegistrationData
+  ): Promise<{ success: boolean; error?: string }> => {
+    return await registerWithRole(email, password, role, profileData);
+  }, []);
+
   const value: AuthContextType = {
     user,
     isLoading,
     isAuthenticated: !!user,
     login,
     logout,
+    registerWithEmail: registerWithEmailHandler,
   };
 
   return (

@@ -9,15 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getAllClientProjects, getProjectStaff } from '@/services/firestore.service';
+import { getAllClientProjects } from '@/services/firestore.service';
 import type { ClientProject } from '@/types';
 
-interface ProjectWithStaffCount extends ClientProject {
-  staffCount: number;
-}
-
 export default function ProjectsManagement() {
-  const [projects, setProjects] = useState<ProjectWithStaffCount[]>([]);
+  const [projects, setProjects] = useState<ClientProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -29,20 +25,7 @@ export default function ProjectsManagement() {
     setIsLoading(true);
     try {
       const data = await getAllClientProjects();
-      
-      // Fetch staff count for each project
-      const projectsWithStaff = await Promise.all(
-        data.map(async (project) => {
-          try {
-            const staff = await getProjectStaff(project.clientProjectId);
-            return { ...project, staffCount: staff.length };
-          } catch {
-            return { ...project, staffCount: 0 };
-          }
-        })
-      );
-      
-      setProjects(projectsWithStaff);
+      setProjects(data);
     } catch (error) {
       console.error('Error loading projects:', error);
     } finally {
@@ -220,7 +203,7 @@ export default function ProjectsManagement() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                      <div className="space-y-4">
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Activity className="h-4 w-4" />
@@ -228,7 +211,7 @@ export default function ProjectsManagement() {
                         </div>
                         <div className="flex items-center gap-1">
                           <Users className="h-4 w-4" />
-                          <span>{project.staffCount} staff</span>
+                          <span>Client project</span>
                         </div>
                       </div>
                       
