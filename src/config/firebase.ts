@@ -1,9 +1,7 @@
-import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
+import { getApp, getApps, initializeApp, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 
-// Main Lucidence Authentication Firebase Config
-// Uses environment variables from .env file
 const mainFirebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "YOUR_API_KEY",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "YOUR_AUTH_DOMAIN",
@@ -14,13 +12,21 @@ const mainFirebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "YOUR_MEASUREMENT_ID",
 };
 
-// Initialize main Firebase app (only if [DEFAULT] doesn't exist)
-const mainApp: FirebaseApp = getApps().find(app => app.name === '[DEFAULT]')
-  ? getApp()
-  : initializeApp(mainFirebaseConfig);
+const MAIN_APP_NAME = 'main';
 
+const mainApp: FirebaseApp = getApps().some(app => app.name === MAIN_APP_NAME)
+  ? getApp(MAIN_APP_NAME)
+  : initializeApp(mainFirebaseConfig, MAIN_APP_NAME);
+
+// Initialize services
 export const auth: Auth = getAuth(mainApp);
 export const db: Firestore = getFirestore(mainApp);
+export const googleProvider = new GoogleAuthProvider();
+
+// Configure Google provider
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+});
 
 // Store for dynamically initialized client project Firebase apps
 const clientApps: Map<string, FirebaseApp> = new Map();
@@ -41,24 +47,24 @@ export interface ClientFirebaseConfig {
  * This allows multi-tenant architecture where each client has their own Firebase
  */
 export function initializeClientProjectApp(
-  projectId: string, 
+  clientProjectId: string,
   config: ClientFirebaseConfig
 ): FirebaseApp {
   // Check if already initialized
-  if (clientApps.has(projectId)) {
-    return clientApps.get(projectId)!;
+  if (clientApps.has(clientProjectId)) {
+    return clientApps.get(clientProjectId)!;
   }
 
   // Check if this app name already exists in Firebase
-  const existingApp = getApps().find(app => app.name === projectId);
+  const existingApp = getApps().find(app => app.name === clientProjectId);
   if (existingApp) {
-    clientApps.set(projectId, existingApp);
+    clientApps.set(clientProjectId, existingApp);
     return existingApp;
   }
 
   // Initialize new app with unique name
-  const app = initializeApp(config, projectId);
-  clientApps.set(projectId, app);
+  const app = initializeApp(config, clientProjectId);
+  clientApps.set(clientProjectId, app);
   return app;
 }
 

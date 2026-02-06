@@ -1,82 +1,108 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, Loader2, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { User, Mail, Eye, EyeOff, Loader2, CheckCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { registerUser } from '@/services/auth.service';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import type { AdminRegistrationData, StaffRegistrationData, ClientRegistrationData, UserRole } from '@/types';
 
 const registerSchema = z.object({
-  username: z.string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(30, 'Username must be less than 30 characters')
-    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
-  email: z.string().email('Please enter a valid email address').max(255),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
+  name: z.string().min(2, 'Name is required'),
+  email: z.string().email('Enter a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
+  role: z.enum(['admin', 'staff', 'client']),
+}).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
 });
 
-type RegisterFormData = z.infer<typeof registerSchema>;
+type RegisterFormInput = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
+  const { registerWithEmail } = useAuth();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [registrationComplete, setRegistrationComplete] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [completed, setCompleted] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<RegisterFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<RegisterFormInput>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      role: 'client',
+    },
   });
 
-  const password = watch('password', '');
-
-  const passwordRequirements = [
-    { met: password.length >= 8, text: 'At least 8 characters' },
-    { met: /[A-Z]/.test(password), text: 'One uppercase letter' },
-    { met: /[a-z]/.test(password), text: 'One lowercase letter' },
-    { met: /[0-9]/.test(password), text: 'One number' },
-  ];
-
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterFormInput) => {
     setIsLoading(true);
-    try {
-      await registerUser(data.username, data.email, data.password);
-      setRegistrationComplete(true);
-      toast({
-        title: 'Registration successful!',
-        description: 'Please check your email to verify your account.',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Registration failed',
-        description: error.message || 'Please try again later.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+
+    let profileData: AdminRegistrationData | StaffRegistrationData | ClientRegistrationData;
+
+    if (data.role === 'admin') {
+      profileData = {
+        name: data.name,
+        email: data.email,
+        role: 'admin',
+        status: 'active',
+        mobile: '',
+        department: 'General',
+        accessLevel: 'full',
+        backupEmail: data.email,
+      };
+    } else if (data.role === 'staff') {
+      profileData = {
+        name: data.name,
+        email: data.email,
+        role: 'staff',
+        status: 'active',
+        mobile: '',
+        department: 'General',
+        accessLevel: 'limited',
+      };
+    } else {
+      profileData = {
+        name: data.name,
+        email: data.email,
+        role: 'client',
+        status: 'active',
+        mobile: '',
+        businessName: data.name + "'s Business",
+        address: '',
+        city: '',
+        handlingWebsite: false,
+        handlingChatbot: false,
+        handlingAiAgent: false,
+        handlingAppointments: false,
+        handlingMarketing: false,
+      };
     }
+
+    const result = await registerWithEmail(data.email, data.password, data.role, profileData);
+
+    if (!result.success) {
+      toast({ title: 'Registration failed', description: result.error || 'Try again', variant: 'destructive' });
+    } else {
+      toast({ title: 'Registration successful', description: 'Please verify your email to log in.' });
+      setCompleted(true);
+    }
+
+    setIsLoading(false);
   };
 
-  if (registrationComplete) {
+  if (completed) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -87,18 +113,11 @@ export function RegisterForm() {
           <CheckCircle className="w-8 h-8 text-primary" />
         </div>
         <h2 className="text-2xl font-display font-bold text-foreground">
-          Verify Your Email
+          Registration Successful
         </h2>
         <p className="text-muted-foreground">
-          We've sent a verification link to your email address. Please check your inbox and click the link to activate your account.
+          Please check your email to verify your account before logging in.
         </p>
-        <Button
-          onClick={() => navigate('/login')}
-          variant="outline"
-          className="border-border"
-        >
-          Back to Login
-        </Button>
       </motion.div>
     );
   }
@@ -112,36 +131,32 @@ export function RegisterForm() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="name">Name</Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              id="username"
-              placeholder="Choose a unique username"
-              className="pl-10 bg-secondary border-border focus:border-primary"
-              {...register('username')}
+              id="name"
+              placeholder="Your full name"
+              className="pl-10 bg-secondary border-border"
+              {...register('name')}
             />
           </div>
-          {errors.username && (
-            <p className="text-sm text-destructive">{errors.username.message}</p>
-          )}
+          {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="email">Email</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="email"
               type="email"
-              placeholder="your@email.com"
-              className="pl-10 bg-secondary border-border focus:border-primary"
+              placeholder="you@example.com"
+              className="pl-10 bg-secondary border-border"
               {...register('email')}
             />
           </div>
-          {errors.email && (
-            <p className="text-sm text-destructive">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -151,8 +166,8 @@ export function RegisterForm() {
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Create a strong password"
-              className="pl-10 pr-10 bg-secondary border-border focus:border-primary"
+              placeholder="Create a password"
+              className="pl-10 pr-10 bg-secondary border-border"
               {...register('password')}
             />
             <button
@@ -163,26 +178,7 @@ export function RegisterForm() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.password && (
-            <p className="text-sm text-destructive">{errors.password.message}</p>
-          )}
-          
-          {/* Password requirements */}
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {passwordRequirements.map((req, index) => (
-              <div
-                key={index}
-                className={`flex items-center gap-1.5 text-xs ${
-                  req.met ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                <div className={`w-1.5 h-1.5 rounded-full ${
-                  req.met ? 'bg-primary' : 'bg-muted-foreground/30'
-                }`} />
-                {req.text}
-              </div>
-            ))}
-          </div>
+          {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -193,7 +189,7 @@ export function RegisterForm() {
               id="confirmPassword"
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="Confirm your password"
-              className="pl-10 pr-10 bg-secondary border-border focus:border-primary"
+              className="pl-10 pr-10 bg-secondary border-border"
               {...register('confirmPassword')}
             />
             <button
@@ -204,9 +200,25 @@ export function RegisterForm() {
               {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.confirmPassword && (
-            <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-          )}
+          {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="role">Role</Label>
+          <Select
+            value={watch('role')}
+            onValueChange={(value: UserRole) => setValue('role', value)}
+          >
+            <SelectTrigger className="bg-secondary border-border">
+              <SelectValue placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="staff">Staff</SelectItem>
+              <SelectItem value="client">Client</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.role && <p className="text-sm text-destructive">{errors.role.message}</p>}
         </div>
 
         <Button
@@ -220,7 +232,7 @@ export function RegisterForm() {
               Creating Account...
             </>
           ) : (
-            'Create Account'
+            'Register'
           )}
         </Button>
       </form>

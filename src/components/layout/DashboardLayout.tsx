@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -59,11 +59,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = user?.role === 'admin' 
-    ? adminNavItems 
-    : user?.role === 'staff' 
-    ? staffNavItems 
-    : clientNavItems;
+  const navItems = user?.role === 'admin'
+    ? adminNavItems
+    : user?.role === 'staff'
+      ? staffNavItems
+      : clientNavItems;
 
   const handleLogout = async () => {
     await logout();
@@ -72,10 +72,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
     return name.slice(0, 2).toUpperCase();
   };
 
@@ -125,7 +121,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </Avatar>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-sidebar-foreground truncate">
-                    {user?.name || user?.email}
+                    {user?.name}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {user?.role}
@@ -203,7 +199,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </nav>
 
               <div className="p-4 border-t border-sidebar-border">
-                <button 
+                <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
                 >

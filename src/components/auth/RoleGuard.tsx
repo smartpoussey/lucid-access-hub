@@ -10,10 +10,10 @@ interface RoleGuardProps {
   fallbackPath?: string;
 }
 
-export function RoleGuard({ 
-  children, 
-  allowedRoles, 
-  fallbackPath = '/login' 
+export function RoleGuard({
+  children,
+  allowedRoles,
+  fallbackPath = '/login'
 }: RoleGuardProps) {
   const { user, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
@@ -34,15 +34,14 @@ export function RoleGuard({
   }
 
   if (!user || !allowedRoles.includes(user.role)) {
-    // Redirect to appropriate dashboard based on role
-    const redirectPath = user?.role === 'admin' 
-      ? '/admin' 
-      : user?.role === 'staff' 
-      ? '/staff' 
-      : user?.role === 'client' 
-      ? '/client' 
-      : '/login';
-    
+    const redirectPath = user?.role === 'admin'
+      ? '/admin'
+      : user?.role === 'staff'
+        ? '/staff'
+        : user?.role === 'client'
+          ? '/client'
+          : '/login';
+
     return <Navigate to={redirectPath} replace />;
   }
 
@@ -94,13 +93,13 @@ export function GuestGuard({ children }: GuestGuardProps) {
   }
 
   if (isAuthenticated && user) {
-    // Redirect to appropriate dashboard based on role
-    const redirectPath = user.role === 'admin' 
-      ? '/admin' 
-      : user.role === 'staff' 
-      ? '/staff' 
-      : '/client';
-    
+    const redirectPath =
+      user.role === 'admin'
+        ? '/admin'
+        : user.role === 'staff'
+          ? '/staff'
+          : '/client';
+
     return <Navigate to={redirectPath} replace />;
   }
 
