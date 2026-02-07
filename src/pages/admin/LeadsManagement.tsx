@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -42,9 +44,23 @@ export default function LeadsManagement() {
   // Approval dialog state
   const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
   const [approvalLead, setApprovalLead] = useState<Lead | null>(null);
-  const [approvalPassword, setApprovalPassword] = useState('');
-  const [approvalConfirmPassword, setApprovalConfirmPassword] = useState('');
   const [isApproving, setIsApproving] = useState(false);
+  
+  // Approval form data
+  const [approvalForm, setApprovalForm] = useState({
+    password: '',
+    confirmPassword: '',
+    mobile: '',
+    businessName: '',
+    address: '',
+    city: '',
+    handlingWebsite: false,
+    handlingChatbot: false,
+    handlingAiAgent: false,
+    handlingAppointments: false,
+    handlingMarketing: false,
+    additionalNotes: '',
+  });
   
   // Rejection/Contact dialog state
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
@@ -132,11 +148,23 @@ export default function LeadsManagement() {
     }
   };
 
-  // Open approval dialog
+  // Open approval dialog with pre-filled data from lead
   const openApprovalDialog = (lead: Lead) => {
     setApprovalLead(lead);
-    setApprovalPassword('');
-    setApprovalConfirmPassword('');
+    setApprovalForm({
+      password: '',
+      confirmPassword: '',
+      mobile: lead.mobile || '',
+      businessName: lead.businessName || '',
+      address: lead.address || '',
+      city: lead.city || '',
+      handlingWebsite: lead.hasWebsite || false,
+      handlingChatbot: lead.hasChatbot || false,
+      handlingAiAgent: lead.hasAiAgent || false,
+      handlingAppointments: lead.hasReceptionist || false,
+      handlingMarketing: false,
+      additionalNotes: lead.additionalNotes || '',
+    });
     setIsApprovalDialogOpen(true);
   };
 
@@ -144,40 +172,50 @@ export default function LeadsManagement() {
   const handleApprove = async () => {
     if (!approvalLead) return;
     
-    if (approvalPassword.length < 8) {
+    if (approvalForm.password.length < 8) {
       toast.error('Password must be at least 8 characters');
       return;
     }
     
-    if (approvalPassword !== approvalConfirmPassword) {
+    if (approvalForm.password !== approvalForm.confirmPassword) {
       toast.error('Passwords do not match');
+      return;
+    }
+
+    if (!approvalForm.mobile) {
+      toast.error('Mobile number is required');
+      return;
+    }
+
+    if (!approvalForm.businessName) {
+      toast.error('Business name is required');
       return;
     }
 
     setIsApproving(true);
     try {
-      // Build client profile data from lead
+      // Build client profile data from form
       const clientData: ClientRegistrationData = {
         name: approvalLead.name,
         email: approvalLead.email,
         role: 'client',
         status: 'active',
-        mobile: approvalLead.mobile || '',
-        businessName: approvalLead.businessName || '',
-        address: approvalLead.address || '',
-        city: approvalLead.city || '',
-        handlingWebsite: approvalLead.hasWebsite || false,
-        handlingChatbot: approvalLead.hasChatbot || false,
-        handlingAiAgent: approvalLead.hasAiAgent || false,
-        handlingAppointments: approvalLead.hasReceptionist || false,
-        handlingMarketing: false,
-        additionalNotes: approvalLead.additionalNotes,
+        mobile: approvalForm.mobile,
+        businessName: approvalForm.businessName,
+        address: approvalForm.address,
+        city: approvalForm.city,
+        handlingWebsite: approvalForm.handlingWebsite,
+        handlingChatbot: approvalForm.handlingChatbot,
+        handlingAiAgent: approvalForm.handlingAiAgent,
+        handlingAppointments: approvalForm.handlingAppointments,
+        handlingMarketing: approvalForm.handlingMarketing,
+        additionalNotes: approvalForm.additionalNotes || undefined,
       };
 
       // Register the client in Firebase Auth and Firestore
       const result = await registerWithRole(
         approvalLead.email,
-        approvalPassword,
+        approvalForm.password,
         'client',
         clientData
       );
@@ -498,56 +536,190 @@ export default function LeadsManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Approval dialog */}
+      {/* Approval dialog with full client details form */}
       <Dialog open={isApprovalDialogOpen} onOpenChange={setIsApprovalDialogOpen}>
-        <DialogContent className="max-w-md bg-card border-border">
+        <DialogContent className="max-w-2xl bg-card border-border max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="text-foreground">Approve & Register Client</DialogTitle>
             <DialogDescription>
-              Set login credentials for {approvalLead?.name}
+              Complete all required details to register {approvalLead?.name} as a client
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                value={approvalLead?.email || ''}
-                disabled
-                className="bg-secondary"
-              />
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="space-y-6 py-4">
+              {/* Account Info Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">Account Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      value={approvalLead?.email || ''}
+                      disabled
+                      className="bg-secondary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      value={approvalLead?.name || ''}
+                      disabled
+                      className="bg-secondary"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={approvalForm.password}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder="Min 8 characters"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={approvalForm.confirmPassword}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      placeholder="Confirm password"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Info Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">Contact Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="mobile">Mobile Number *</Label>
+                    <Input
+                      id="mobile"
+                      value={approvalForm.mobile}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, mobile: e.target.value }))}
+                      placeholder="+1 234 567 8900"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="businessName">Business Name *</Label>
+                    <Input
+                      id="businessName"
+                      value={approvalForm.businessName}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, businessName: e.target.value }))}
+                      placeholder="Company name"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Input
+                      id="address"
+                      value={approvalForm.address}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="Street address"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      value={approvalForm.city}
+                      onChange={(e) => setApprovalForm(prev => ({ ...prev, city: e.target.value }))}
+                      placeholder="City"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Services Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2">Services to Handle</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="handlingWebsite"
+                      checked={approvalForm.handlingWebsite}
+                      onCheckedChange={(checked) => 
+                        setApprovalForm(prev => ({ ...prev, handlingWebsite: checked === true }))
+                      }
+                    />
+                    <Label htmlFor="handlingWebsite" className="text-sm font-normal cursor-pointer">
+                      Website
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="handlingChatbot"
+                      checked={approvalForm.handlingChatbot}
+                      onCheckedChange={(checked) => 
+                        setApprovalForm(prev => ({ ...prev, handlingChatbot: checked === true }))
+                      }
+                    />
+                    <Label htmlFor="handlingChatbot" className="text-sm font-normal cursor-pointer">
+                      Chatbot
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="handlingAiAgent"
+                      checked={approvalForm.handlingAiAgent}
+                      onCheckedChange={(checked) => 
+                        setApprovalForm(prev => ({ ...prev, handlingAiAgent: checked === true }))
+                      }
+                    />
+                    <Label htmlFor="handlingAiAgent" className="text-sm font-normal cursor-pointer">
+                      AI Agent
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="handlingAppointments"
+                      checked={approvalForm.handlingAppointments}
+                      onCheckedChange={(checked) => 
+                        setApprovalForm(prev => ({ ...prev, handlingAppointments: checked === true }))
+                      }
+                    />
+                    <Label htmlFor="handlingAppointments" className="text-sm font-normal cursor-pointer">
+                      Appointments
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="handlingMarketing"
+                      checked={approvalForm.handlingMarketing}
+                      onCheckedChange={(checked) => 
+                        setApprovalForm(prev => ({ ...prev, handlingMarketing: checked === true }))
+                      }
+                    />
+                    <Label htmlFor="handlingMarketing" className="text-sm font-normal cursor-pointer">
+                      Marketing
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes Section */}
+              <div className="space-y-2">
+                <Label htmlFor="additionalNotes">Additional Notes</Label>
+                <Textarea
+                  id="additionalNotes"
+                  value={approvalForm.additionalNotes}
+                  onChange={(e) => setApprovalForm(prev => ({ ...prev, additionalNotes: e.target.value }))}
+                  placeholder="Any additional notes about this client..."
+                  rows={3}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={approvalLead?.name || ''}
-                disabled
-                className="bg-secondary"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={approvalPassword}
-                onChange={(e) => setApprovalPassword(e.target.value)}
-                placeholder="Min 8 characters"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={approvalConfirmPassword}
-                onChange={(e) => setApprovalConfirmPassword(e.target.value)}
-                placeholder="Confirm password"
-              />
-            </div>
-          </div>
+          </ScrollArea>
 
           <DialogFooter>
             <Button
