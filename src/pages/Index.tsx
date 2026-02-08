@@ -9,13 +9,13 @@ import {
   Check, 
   ChevronDown,
   Star,
-  MessageSquare,
   Calendar,
   Globe,
   Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Accordion,
@@ -23,39 +23,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-
-const features = [
-  { 
-    icon: Shield, 
-    title: 'Secure Authentication', 
-    description: 'Enterprise-grade security with role-based access control and multi-factor authentication.' 
-  },
-  { 
-    icon: Zap, 
-    title: 'Multi-Tenant Ready', 
-    description: 'Manage multiple client projects from a single platform with isolated data environments.' 
-  },
-  { 
-    icon: Users, 
-    title: 'Team Management', 
-    description: 'Assign staff to projects, track progress, and collaborate effortlessly.' 
-  },
-  { 
-    icon: Bot, 
-    title: 'AI Integration', 
-    description: 'Built-in AI capabilities for healthcare automation and intelligent workflows.' 
-  },
-  { 
-    icon: Calendar, 
-    title: 'Smart Scheduling', 
-    description: 'Automated appointment management with intelligent conflict resolution.' 
-  },
-  { 
-    icon: Globe, 
-    title: 'Cloud Native', 
-    description: 'Scalable infrastructure that grows with your practice needs.' 
-  },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const testimonials = [
   {
@@ -81,75 +49,95 @@ const testimonials = [
   },
 ];
 
-const pricingPlans = [
-  {
-    name: 'Starter',
-    price: '99',
-    description: 'Perfect for small practices getting started with AI',
-    features: [
-      'Up to 500 calls/month',
-      'Basic AI receptionist',
-      'Email support',
-      'Standard analytics',
-      '1 user included',
-    ],
-    highlighted: false,
-  },
-  {
-    name: 'Professional',
-    price: '299',
-    description: 'For growing practices that need more power',
-    features: [
-      'Up to 2,000 calls/month',
-      'Advanced AI receptionist',
-      'Priority support',
-      'Advanced analytics',
-      '5 users included',
-      'Custom integrations',
-    ],
-    highlighted: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    description: 'For large organizations with custom needs',
-    features: [
-      'Unlimited calls',
-      'Full AI suite',
-      'Dedicated support',
-      'Custom analytics',
-      'Unlimited users',
-      'White-label options',
-      'SLA guarantee',
-    ],
-    highlighted: false,
-  },
-];
-
-const faqs = [
-  {
-    question: 'How does the AI receptionist work?',
-    answer: 'Our AI receptionist uses advanced natural language processing to understand and respond to patient calls. It can schedule appointments, answer common questions, and seamlessly transfer complex inquiries to your staff.',
-  },
-  {
-    question: 'Is my patient data secure?',
-    answer: 'Absolutely. We are HIPAA compliant and use enterprise-grade encryption for all data at rest and in transit. Your patient information is protected with the highest security standards.',
-  },
-  {
-    question: 'Can I integrate with my existing systems?',
-    answer: 'Yes! Lucidence integrates with most popular EHR/EMR systems, practice management software, and calendar applications. Our team will help you set up custom integrations if needed.',
-  },
-  {
-    question: 'How long does setup take?',
-    answer: 'Most practices are up and running within 24-48 hours. Our onboarding team will guide you through the process and ensure everything is configured to your needs.',
-  },
-  {
-    question: 'What happens if the AI cannot handle a call?',
-    answer: 'Our AI knows its limitations. When it encounters a complex situation, it will smoothly transfer the call to your staff or take a message for callback, ensuring no patient is left without assistance.',
-  },
-];
-
 export default function Index() {
+  const { t } = useLanguage();
+
+  const features = [
+    { 
+      icon: Shield, 
+      title: t('features.secureAuth'), 
+      description: t('features.secureAuthDesc')
+    },
+    { 
+      icon: Zap, 
+      title: t('features.multiTenant'), 
+      description: t('features.multiTenantDesc')
+    },
+    { 
+      icon: Users, 
+      title: t('features.teamMgmt'), 
+      description: t('features.teamMgmtDesc')
+    },
+    { 
+      icon: Bot, 
+      title: t('features.aiIntegration'), 
+      description: t('features.aiIntegrationDesc')
+    },
+    { 
+      icon: Calendar, 
+      title: t('features.scheduling'), 
+      description: t('features.schedulingDesc')
+    },
+    { 
+      icon: Globe, 
+      title: t('features.cloud'), 
+      description: t('features.cloudDesc')
+    },
+  ];
+
+  const pricingPlans = [
+    {
+      name: t('pricing.starter'),
+      price: '99',
+      description: t('pricing.starterDesc'),
+      features: [
+        t('pricing.calls500'),
+        t('pricing.basicAI'),
+        t('pricing.emailSupport'),
+        t('pricing.standardAnalytics'),
+        t('pricing.1user'),
+      ],
+      highlighted: false,
+    },
+    {
+      name: t('pricing.professional'),
+      price: '299',
+      description: t('pricing.professionalDesc'),
+      features: [
+        t('pricing.calls2000'),
+        t('pricing.advancedAI'),
+        t('pricing.prioritySupport'),
+        t('pricing.advancedAnalytics'),
+        t('pricing.5users'),
+        t('pricing.customIntegrations'),
+      ],
+      highlighted: true,
+    },
+    {
+      name: t('pricing.enterprise'),
+      price: 'Custom',
+      description: t('pricing.enterpriseDesc'),
+      features: [
+        t('pricing.unlimitedCalls'),
+        t('pricing.fullAI'),
+        t('pricing.dedicatedSupport'),
+        t('pricing.customAnalytics'),
+        t('pricing.unlimitedUsers'),
+        t('pricing.whiteLabel'),
+        t('pricing.sla'),
+      ],
+      highlighted: false,
+    },
+  ];
+
+  const faqs = [
+    { question: t('faq.q1'), answer: t('faq.a1') },
+    { question: t('faq.q2'), answer: t('faq.a2') },
+    { question: t('faq.q3'), answer: t('faq.a3') },
+    { question: t('faq.q4'), answer: t('faq.a4') },
+    { question: t('faq.q5'), answer: t('faq.a5') },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -163,20 +151,21 @@ export default function Index() {
           </Link>
           
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
-            <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
+            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('nav.features')}</a>
+            <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('nav.testimonials')}</a>
+            <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('nav.pricing')}</a>
+            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('nav.faq')}</a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
             <ThemeToggle />
             <Link to="/login">
-              <Button variant="ghost" size="sm">Login</Button>
+              <Button variant="ghost" size="sm">{t('nav.login')}</Button>
             </Link>
             <Link to="/signup">
               <Button size="sm" className="bg-primary text-primary-foreground">
-                Get Started
+                {t('nav.getStarted')}
               </Button>
             </Link>
           </div>
@@ -197,44 +186,43 @@ export default function Index() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
               <Sparkles className="h-4 w-4" />
-              AI-Powered Healthcare Solutions
+              {t('hero.badge')}
             </div>
             
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-display font-bold text-foreground mb-6 leading-tight">
-              Intelligent Automation for{' '}
-              <span className="text-gradient">Modern Clinics</span>
+              {t('hero.title')}{' '}
+              <span className="text-gradient">{t('hero.titleHighlight')}</span>
             </h1>
             
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-              Lucidence provides AI-powered reception, scheduling, and patient management. 
-              Reduce no-shows, automate calls, and focus on what matters most—your patients.
+              {t('hero.description')}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button size="lg" className="bg-primary text-primary-foreground w-full sm:w-auto">
-                  Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+                  {t('hero.cta')} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <a href="#features">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  Learn More <ChevronDown className="ml-2 h-5 w-5" />
+                  {t('hero.learnMore')} <ChevronDown className="ml-2 h-5 w-5" />
                 </Button>
               </a>
             </div>
 
-            <div className="mt-12 flex items-center justify-center gap-8 text-sm text-muted-foreground">
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" />
-                No credit card required
+                {t('hero.noCard')}
               </div>
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" />
-                14-day free trial
+                {t('hero.trial')}
               </div>
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" />
-                HIPAA compliant
+                {t('hero.hipaa')}
               </div>
             </div>
           </motion.div>
@@ -251,10 +239,10 @@ export default function Index() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              Everything you need to modernize your practice
+              {t('features.title')}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              From AI-powered reception to intelligent scheduling, Lucidence provides the tools your clinic needs to thrive.
+              {t('features.description')}
             </p>
           </motion.div>
 
@@ -296,10 +284,10 @@ export default function Index() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              Trusted by healthcare professionals
+              {t('testimonials.title')}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              See what our customers have to say about transforming their practices with Lucidence.
+              {t('testimonials.description')}
             </p>
           </motion.div>
 
@@ -349,10 +337,10 @@ export default function Index() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              Simple, transparent pricing
+              {t('pricing.title')}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Choose the plan that fits your practice. All plans include a 14-day free trial.
+              {t('pricing.description')}
             </p>
           </motion.div>
 
@@ -368,7 +356,7 @@ export default function Index() {
                 <Card className={`h-full relative ${plan.highlighted ? 'border-primary shadow-lg' : 'border-border/50'}`}>
                   {plan.highlighted && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                      Most Popular
+                      {t('pricing.mostPopular')}
                     </div>
                   )}
                   <CardContent className="p-6">
@@ -384,7 +372,7 @@ export default function Index() {
                       ) : (
                         <>
                           <span className="text-3xl font-display font-bold text-foreground">${plan.price}</span>
-                          <span className="text-muted-foreground">/month</span>
+                          <span className="text-muted-foreground">{t('pricing.month')}</span>
                         </>
                       )}
                     </div>
@@ -401,7 +389,7 @@ export default function Index() {
                         className={`w-full ${plan.highlighted ? 'bg-primary text-primary-foreground' : ''}`}
                         variant={plan.highlighted ? 'default' : 'outline'}
                       >
-                        {plan.price === 'Custom' ? 'Contact Sales' : 'Start Free Trial'}
+                        {plan.price === 'Custom' ? t('pricing.contactSales') : t('pricing.startTrial')}
                       </Button>
                     </Link>
                   </CardContent>
@@ -422,10 +410,10 @@ export default function Index() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              Frequently asked questions
+              {t('faq.title')}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Have questions? We have answers. If you can't find what you're looking for, reach out to our team.
+              {t('faq.description')}
             </p>
           </motion.div>
 
@@ -464,20 +452,20 @@ export default function Index() {
             className="text-center"
           >
             <h2 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground mb-4">
-              Ready to transform your practice?
+              {t('cta.title')}
             </h2>
             <p className="text-primary-foreground/80 max-w-2xl mx-auto mb-8">
-              Join hundreds of healthcare providers who have modernized their operations with Lucidence.
+              {t('cta.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                  Start Your Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+                  {t('cta.trial')} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/login">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                  Sign In
+                  {t('cta.signIn')}
                 </Button>
               </Link>
             </div>
@@ -497,40 +485,40 @@ export default function Index() {
                 <span className="text-lg font-display font-semibold text-foreground">Lucidence</span>
               </Link>
               <p className="text-muted-foreground text-sm">
-                AI-powered solutions for modern healthcare practices.
+                {t('footer.tagline')}
               </p>
             </div>
             
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Product</h4>
+              <h4 className="font-semibold text-foreground mb-4">{t('footer.product')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
-                <li><a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Integrations</a></li>
+                <li><a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.features')}</a></li>
+                <li><a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.pricing')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.integrations')}</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Company</h4>
+              <h4 className="font-semibold text-foreground mb-4">{t('footer.company')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">About</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Careers</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.about')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.blog')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.careers')}</a></li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+              <h4 className="font-semibold text-foreground mb-4">{t('footer.legal')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Privacy</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Terms</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.privacy')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.terms')}</a></li>
                 <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">HIPAA</a></li>
               </ul>
             </div>
           </div>
           
           <div className="border-t border-border pt-8 text-center text-muted-foreground text-sm">
-            © {new Date().getFullYear()} Lucidence Platform. All rights reserved.
+            {t('footer.copyright')}
           </div>
         </div>
       </footer>
