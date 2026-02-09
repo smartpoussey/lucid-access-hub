@@ -1,163 +1,78 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ArrowRight, 
-  Shield, 
-  Zap, 
-  Users, 
-  Bot, 
-  Check, 
-  ChevronDown,
-  Star,
-  Calendar,
+import {
+  ArrowRight,
+  Shield,
+  Zap,
+  Bot,
+  Check,
+  Phone,
+  MessageSquare,
+  CalendarCheck,
+  Sparkles,
   Globe,
-  Sparkles
+  Clock,
+  Cpu,
+  Rocket,
+  ShieldCheck,
+  Languages,
+  Server,
+  Brain,
+  Menu,
+  X,
+  Send,
+  Mic,
+  User,
+  Mail,
+  Building2,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
-
-const testimonials = [
-  {
-    name: 'Dr. Sarah Chen',
-    role: 'Medical Director',
-    company: 'HealthFirst Clinic',
-    content: 'Lucidence transformed how we manage patient interactions. The AI receptionist handles calls 24/7 with remarkable accuracy.',
-    avatar: 'SC',
-  },
-  {
-    name: 'Michael Rodriguez',
-    role: 'Operations Manager',
-    company: 'Metro Dental Group',
-    content: 'We reduced no-shows by 40% within the first month. The automated reminders and rescheduling are game changers.',
-    avatar: 'MR',
-  },
-  {
-    name: 'Dr. Emily Watson',
-    role: 'Practice Owner',
-    company: 'Wellness Partners',
-    content: 'Finally, a platform that understands healthcare workflows. Setup was seamless and support has been exceptional.',
-    avatar: 'EW',
-  },
-];
 
 export default function Index() {
   const { t } = useLanguage();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const features = [
-    { 
-      icon: Shield, 
-      title: t('features.secureAuth'), 
-      description: t('features.secureAuthDesc')
-    },
-    { 
-      icon: Zap, 
-      title: t('features.multiTenant'), 
-      description: t('features.multiTenantDesc')
-    },
-    { 
-      icon: Users, 
-      title: t('features.teamMgmt'), 
-      description: t('features.teamMgmtDesc')
-    },
-    { 
-      icon: Bot, 
-      title: t('features.aiIntegration'), 
-      description: t('features.aiIntegrationDesc')
-    },
-    { 
-      icon: Calendar, 
-      title: t('features.scheduling'), 
-      description: t('features.schedulingDesc')
-    },
-    { 
-      icon: Globe, 
-      title: t('features.cloud'), 
-      description: t('features.cloudDesc')
-    },
-  ];
-
-  const pricingPlans = [
-    {
-      name: t('pricing.starter'),
-      price: '99',
-      description: t('pricing.starterDesc'),
-      features: [
-        t('pricing.calls500'),
-        t('pricing.basicAI'),
-        t('pricing.emailSupport'),
-        t('pricing.standardAnalytics'),
-        t('pricing.1user'),
-      ],
-      highlighted: false,
-    },
-    {
-      name: t('pricing.professional'),
-      price: '299',
-      description: t('pricing.professionalDesc'),
-      features: [
-        t('pricing.calls2000'),
-        t('pricing.advancedAI'),
-        t('pricing.prioritySupport'),
-        t('pricing.advancedAnalytics'),
-        t('pricing.5users'),
-        t('pricing.customIntegrations'),
-      ],
-      highlighted: true,
-    },
-    {
-      name: t('pricing.enterprise'),
-      price: 'Custom',
-      description: t('pricing.enterpriseDesc'),
-      features: [
-        t('pricing.unlimitedCalls'),
-        t('pricing.fullAI'),
-        t('pricing.dedicatedSupport'),
-        t('pricing.customAnalytics'),
-        t('pricing.unlimitedUsers'),
-        t('pricing.whiteLabel'),
-        t('pricing.sla'),
-      ],
-      highlighted: false,
-    },
-  ];
-
-  const faqs = [
-    { question: t('faq.q1'), answer: t('faq.a1') },
-    { question: t('faq.q2'), answer: t('faq.a2') },
-    { question: t('faq.q3'), answer: t('faq.a3') },
-    { question: t('faq.q4'), answer: t('faq.a4') },
-    { question: t('faq.q5'), answer: t('faq.a5') },
+  const navLinks = [
+    { href: '#how-it-works', label: t('nav.howItWorks') },
+    { href: '#products', label: t('nav.products') },
+    { href: '#pricing', label: t('nav.pricing') },
+    { href: '#demo', label: t('nav.demo') },
+    { href: '#contact', label: t('nav.contact') },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* ─── NAVBAR ─── */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
+          {/* Left: Logo */}
+          <Link to="/" className="flex items-center gap-3 flex-shrink-0">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-display font-semibold text-foreground">Lucidence</span>
           </Link>
-          
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('nav.features')}</a>
-            <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('nav.testimonials')}</a>
-            <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('nav.pricing')}</a>
-            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('nav.faq')}</a>
+
+          {/* Center: Nav Links */}
+          <nav className="hidden lg:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <a key={link.href} href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {link.label}
+              </a>
+            ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          {/* Right: Actions */}
+          <div className="hidden lg:flex items-center gap-2">
             <LanguageToggle />
             <ThemeToggle />
             <Link to="/login">
@@ -169,103 +84,96 @@ export default function Index() {
               </Button>
             </Link>
           </div>
+
+          {/* Mobile hamburger */}
+          <button className="lg:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl px-6 py-4 space-y-4">
+            {navLinks.map((link) => (
+              <a key={link.href} href={link.href} className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                {link.label}
+              </a>
+            ))}
+            <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+              <LanguageToggle />
+              <ThemeToggle />
+              <Link to="/login"><Button variant="ghost" size="sm">{t('nav.login')}</Button></Link>
+              <Link to="/signup"><Button size="sm" className="bg-primary text-primary-foreground">{t('nav.getStarted')}</Button></Link>
+            </div>
+          </div>
+        )}
       </header>
 
-      {/* Hero */}
+      {/* ─── HERO ─── */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0 hero-gradient" />
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-30" style={{ background: 'var(--gradient-glow)' }} />
-        
+
         <div className="container mx-auto px-6 relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.6 }} 
-            className="max-w-3xl mx-auto text-center"
-          >
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <Sparkles className="h-4 w-4" />
-              {t('hero.badge')}
-            </div>
-            
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-display font-bold text-foreground mb-6 leading-tight">
-              {t('hero.title')}{' '}
-              <span className="text-gradient">{t('hero.titleHighlight')}</span>
-            </h1>
-            
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-              {t('hero.description')}
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/signup">
-                <Button size="lg" className="bg-primary text-primary-foreground w-full sm:w-auto">
-                  {t('hero.cta')} <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <a href="#features">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  {t('hero.learnMore')} <ChevronDown className="ml-2 h-5 w-5" />
-                </Button>
-              </a>
+              <ShieldCheck className="h-4 w-4" />
+              {t('hero.compliance')}
             </div>
 
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" />
-                {t('hero.noCard')}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-display font-bold text-foreground mb-6 leading-tight">
+              {t('hero.headline')}
+            </h1>
+
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+              {t('hero.subheadline')}
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                <Phone className="h-4 w-4 text-primary" /> {t('hero.bullet1')}
               </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" />
-                {t('hero.trial')}
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                <MessageSquare className="h-4 w-4 text-primary" /> {t('hero.bullet2')}
               </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" />
-                {t('hero.hipaa')}
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                <CalendarCheck className="h-4 w-4 text-primary" /> {t('hero.bullet3')}
               </div>
             </div>
+
+            <a href="#demo">
+              <Button size="lg" className="bg-primary text-primary-foreground">
+                {t('hero.cta')} <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </a>
+
+            <p className="mt-8 text-sm text-muted-foreground">{t('hero.trust')}</p>
           </motion.div>
         </div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="py-20 bg-muted/30">
+      {/* ─── HOW IT WORKS ─── */}
+      <section id="how-it-works" className="py-20 bg-muted/30">
         <div className="container mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              {t('features.title')}
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t('features.description')}
-            </p>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">{t('howItWorks.title')}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{t('howItWorks.subtitle')}</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="h-full hover:shadow-lg transition-shadow duration-300 border-border/50">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                      <feature.icon className="h-6 w-6 text-primary" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {[
+              { num: '01', title: t('howItWorks.step1.title'), desc: t('howItWorks.step1.desc'), icon: Building2 },
+              { num: '02', title: t('howItWorks.step2.title'), desc: t('howItWorks.step2.desc'), icon: Cpu },
+              { num: '03', title: t('howItWorks.step3.title'), desc: t('howItWorks.step3.desc'), icon: Rocket },
+            ].map((step, i) => (
+              <motion.div key={step.num} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+                <Card className="h-full text-center border-border/50 hover:shadow-lg transition-shadow">
+                  <CardContent className="p-8">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <span className="text-xl font-display font-bold text-primary">{step.num}</span>
                     </div>
-                    <h3 className="text-lg font-display font-semibold text-foreground mb-2">
-                      {feature.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {feature.description}
-                    </p>
+                    <h3 className="text-lg font-display font-semibold text-foreground mb-2">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -274,49 +182,35 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimonials" className="py-20">
+      {/* ─── PRODUCTS ─── */}
+      <section id="products" className="py-20">
         <div className="container mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              {t('testimonials.title')}
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t('testimonials.description')}
-            </p>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">{t('products.title')}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{t('products.subtitle')}</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="h-full border-border/50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            {[
+              { key: 'receptionist', icon: Bot },
+              { key: 'gdpr', icon: Shield },
+              { key: 'esg', icon: Globe },
+              { key: 'workflow', icon: Zap },
+            ].map((product, i) => (
+              <motion.div key={product.key} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
+                <Card className="h-full border-border/50 hover:shadow-lg transition-shadow group">
                   <CardContent className="p-6">
-                    <div className="flex items-center gap-1 mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                      ))}
-                    </div>
-                    <p className="text-foreground mb-6 leading-relaxed">
-                      "{testimonial.content}"
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
-                        {testimonial.avatar}
+                    <Badge variant="secondary" className="mb-3 text-xs">{t(`products.${product.key}.category`)}</Badge>
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <product.icon className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground text-sm">{testimonial.name}</p>
-                        <p className="text-muted-foreground text-xs">{testimonial.role}, {testimonial.company}</p>
+                        <h3 className="text-lg font-display font-semibold text-foreground mb-2">{t(`products.${product.key}.name`)}</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed mb-3">{t(`products.${product.key}.desc`)}</p>
+                        <a href="#" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                          {t('products.learnMore')} <ArrowRight className="h-3 w-3" />
+                        </a>
                       </div>
                     </div>
                   </CardContent>
@@ -327,32 +221,21 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* ─── PRICING ─── */}
       <section id="pricing" className="py-20 bg-muted/30">
         <div className="container mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              {t('pricing.title')}
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t('pricing.description')}
-            </p>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">{t('pricing.title')}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{t('pricing.subtitle')}</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
+            {[
+              { key: 'starter', price: t('pricing.starterPrice'), features: ['f1', 'f2', 'f3', 'f4', 'f5'], highlighted: false },
+              { key: 'pro', price: t('pricing.proPrice'), features: ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'], highlighted: true },
+              { key: 'enterprise', price: t('pricing.enterprisePrice'), features: ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7'], highlighted: false },
+            ].map((plan, i) => (
+              <motion.div key={plan.key} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
                 <Card className={`h-full relative ${plan.highlighted ? 'border-primary shadow-lg' : 'border-border/50'}`}>
                   {plan.highlighted && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
@@ -360,38 +243,63 @@ export default function Index() {
                     </div>
                   )}
                   <CardContent className="p-6">
-                    <h3 className="text-xl font-display font-semibold text-foreground mb-2">
-                      {plan.name}
-                    </h3>
-                    <p className="text-muted-foreground text-sm mb-4">
-                      {plan.description}
-                    </p>
+                    <h3 className="text-xl font-display font-semibold text-foreground mb-1">{t(`pricing.${plan.key}`)}</h3>
+                    <p className="text-muted-foreground text-sm mb-4">{t(`pricing.${plan.key}Desc`)}</p>
                     <div className="mb-6">
-                      {plan.price === 'Custom' ? (
-                        <span className="text-3xl font-display font-bold text-foreground">Custom</span>
-                      ) : (
-                        <>
-                          <span className="text-3xl font-display font-bold text-foreground">${plan.price}</span>
-                          <span className="text-muted-foreground">{t('pricing.month')}</span>
-                        </>
-                      )}
+                      <span className="text-3xl font-display font-bold text-foreground">€{plan.price}</span>
+                      <span className="text-muted-foreground">{t('pricing.month')}</span>
                     </div>
                     <ul className="space-y-3 mb-6">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2 text-sm">
+                      {plan.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm">
                           <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                          <span className="text-muted-foreground">{feature}</span>
+                          <span className="text-muted-foreground">{t(`pricing.${plan.key}.${f}`)}</span>
                         </li>
                       ))}
                     </ul>
                     <Link to="/signup" className="block">
-                      <Button 
-                        className={`w-full ${plan.highlighted ? 'bg-primary text-primary-foreground' : ''}`}
-                        variant={plan.highlighted ? 'default' : 'outline'}
-                      >
-                        {plan.price === 'Custom' ? t('pricing.contactSales') : t('pricing.startTrial')}
+                      <Button className={`w-full ${plan.highlighted ? 'bg-primary text-primary-foreground' : ''}`} variant={plan.highlighted ? 'default' : 'outline'}>
+                        {t('pricing.cta')}
                       </Button>
                     </Link>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center mt-8 space-y-2">
+            <p className="text-sm text-muted-foreground">{t('pricing.trialNote')}</p>
+            <p className="text-sm text-muted-foreground">{t('pricing.hostingNote')}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── WHY LUCIDENCE ─── */}
+      <section className="py-20">
+        <div className="container mx-auto px-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">{t('why.title')}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{t('why.subtitle')}</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              { key: 'gdpr', icon: ShieldCheck },
+              { key: 'bilingual', icon: Languages },
+              { key: 'eu', icon: Server },
+              { key: 'custom', icon: Brain },
+              { key: 'instant', icon: Rocket },
+              { key: 'availability', icon: Clock },
+            ].map((item, i) => (
+              <motion.div key={item.key} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
+                <Card className="h-full border-border/50 hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <item.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-display font-semibold text-foreground mb-2">{t(`why.${item.key}.title`)}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{t(`why.${item.key}.desc`)}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -400,83 +308,122 @@ export default function Index() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section id="faq" className="py-20">
+      {/* ─── DEMO ─── */}
+      <section id="demo" className="py-20 bg-muted/30">
         <div className="container mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              {t('faq.title')}
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t('faq.description')}
-            </p>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">{t('demo.title')}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{t('demo.subtitle')}</p>
           </motion.div>
 
-          <div className="max-w-3xl mx-auto">
-            <Accordion type="single" collapsible className="space-y-4">
-              {faqs.map((faq, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <AccordionItem value={`item-${index}`} className="border border-border/50 rounded-lg px-6 bg-card">
-                    <AccordionTrigger className="text-left font-medium text-foreground hover:no-underline">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground leading-relaxed">
-                      {faq.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                </motion.div>
-              ))}
-            </Accordion>
+          <div className="max-w-2xl mx-auto">
+            {/* Chat conversation */}
+            <Card className="border-border/50 mb-6">
+              <CardContent className="p-6 space-y-4">
+                {/* User message */}
+                <div className="flex justify-end">
+                  <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-3 max-w-[80%]">
+                    <p className="text-sm">{t('demo.user1')}</p>
+                  </div>
+                </div>
+                {/* AI response */}
+                <div className="flex justify-start">
+                  <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 max-w-[80%]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Bot className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-medium text-primary">Lucidence AI</span>
+                    </div>
+                    <p className="text-sm text-foreground">{t('demo.ai1')}</p>
+                  </div>
+                </div>
+                {/* User message */}
+                <div className="flex justify-end">
+                  <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-3 max-w-[80%]">
+                    <p className="text-sm">{t('demo.user2')}</p>
+                  </div>
+                </div>
+                {/* AI response */}
+                <div className="flex justify-start">
+                  <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 max-w-[80%]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Bot className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-medium text-primary">Lucidence AI</span>
+                    </div>
+                    <p className="text-sm text-foreground">{t('demo.ai2')}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* CTA buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+              <Button size="lg" className="bg-primary text-primary-foreground">
+                <Send className="mr-2 h-4 w-4" /> {t('demo.tryLive')}
+              </Button>
+              <Button size="lg" variant="outline">
+                <Mic className="mr-2 h-4 w-4" /> {t('demo.tryCall')}
+              </Button>
+            </div>
+
+            {/* Tags */}
+            <div className="flex flex-wrap justify-center gap-2">
+              <Badge variant="secondary">{t('demo.tag1')}</Badge>
+              <Badge variant="secondary">{t('demo.tag2')}</Badge>
+              <Badge variant="secondary">{t('demo.tag3')}</Badge>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-primary">
+      {/* ─── CONTACT ─── */}
+      <section id="contact" className="py-20">
         <div className="container mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            viewport={{ once: true }}
-            className="text-center"
-          >
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground mb-4">
-              {t('cta.title')}
-            </h2>
-            <p className="text-primary-foreground/80 max-w-2xl mx-auto mb-8">
-              {t('cta.description')}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/signup">
-                <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                  {t('cta.trial')} <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                  {t('cta.signIn')}
-                </Button>
-              </Link>
-            </div>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">{t('contact.title')}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{t('contact.subtitle')}</p>
           </motion.div>
+
+          <div className="max-w-xl mx-auto">
+            <Card className="border-border/50">
+              <CardContent className="p-8 space-y-4">
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder={t('contact.name')} className="pl-10" />
+                </div>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder={t('contact.email')} type="email" className="pl-10" />
+                </div>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <select className="w-full h-10 pl-10 pr-4 rounded-md border border-input bg-background text-sm text-foreground">
+                    <option value="">{t('contact.business')}</option>
+                    <option value="medical">{t('contact.businessTypes.medical')}</option>
+                    <option value="dental">{t('contact.businessTypes.dental')}</option>
+                    <option value="legal">{t('contact.businessTypes.legal')}</option>
+                    <option value="other">{t('contact.businessTypes.other')}</option>
+                  </select>
+                </div>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Textarea placeholder={t('contact.requirements')} className="pl-10 min-h-[100px]" />
+                </div>
+                <Button className="w-full bg-primary text-primary-foreground">
+                  <Send className="mr-2 h-4 w-4" /> {t('contact.cta')}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">{t('contact.privacy')}</p>
+                <p className="text-xs text-muted-foreground text-center">{t('contact.directEmail')}</p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ─── FOOTER ─── */}
       <footer className="border-t border-border py-12 bg-background">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
             <div>
               <Link to="/" className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -484,41 +431,51 @@ export default function Index() {
                 </div>
                 <span className="text-lg font-display font-semibold text-foreground">Lucidence</span>
               </Link>
-              <p className="text-muted-foreground text-sm">
-                {t('footer.tagline')}
-              </p>
+              <p className="text-muted-foreground text-sm">{t('footer.desc')}</p>
             </div>
-            
+
+            {/* Products */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">{t('footer.product')}</h4>
+              <h4 className="font-semibold text-foreground mb-4">{t('footer.products')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.features')}</a></li>
-                <li><a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">{t('nav.pricing')}</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.integrations')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.products.receptionist')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.products.gdpr')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.products.esg')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.products.workflow')}</a></li>
               </ul>
             </div>
-            
+
+            {/* Company */}
             <div>
               <h4 className="font-semibold text-foreground mb-4">{t('footer.company')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.about')}</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.blog')}</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.careers')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.company.about')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.company.careers')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.company.blog')}</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.company.contact')}</a></li>
               </ul>
             </div>
-            
+
+            {/* Contact */}
             <div>
-              <h4 className="font-semibold text-foreground mb-4">{t('footer.legal')}</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.privacy')}</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t('footer.terms')}</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">HIPAA</a></li>
+              <h4 className="font-semibold text-foreground mb-4">{t('footer.contact')}</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>{t('footer.contact.email')}</li>
+                <li>{t('footer.contact.phone')}</li>
+                <li className="whitespace-pre-line">{t('footer.contact.address')}</li>
               </ul>
             </div>
           </div>
-          
-          <div className="border-t border-border pt-8 text-center text-muted-foreground text-sm">
-            {t('footer.copyright')}
+
+          {/* Bottom */}
+          <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+            <p>{t('footer.copyright')}</p>
+            <div className="flex items-center gap-4">
+              <a href="#" className="hover:text-foreground transition-colors">{t('footer.legal.privacy')}</a>
+              <a href="#" className="hover:text-foreground transition-colors">{t('footer.legal.terms')}</a>
+              <a href="#" className="hover:text-foreground transition-colors">{t('footer.legal.imprint')}</a>
+            </div>
+            <p className="text-xs">{t('footer.powered')}</p>
           </div>
         </div>
       </footer>

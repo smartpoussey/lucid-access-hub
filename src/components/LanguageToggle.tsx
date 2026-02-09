@@ -10,7 +10,7 @@ export function LanguageToggle() {
 
   return (
     <Button variant="ghost" size="icon" onClick={toggleLanguage}>
-      <span className="text-base">{language === 'en' ? '🇺🇸' : '🇩🇪'}</span>
+      <span className="text-base">{language === 'de' ? '🇩🇪' : '🇺🇸'}</span>
       <span className="sr-only">Toggle language</span>
     </Button>
   );
