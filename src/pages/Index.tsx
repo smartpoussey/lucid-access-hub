@@ -55,11 +55,14 @@ export default function Index() {
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           {/* Left: Logo */}
-          <Link to="/" className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
+          <Link to="/" className="flex items-center justify-center gap-2 flex-shrink-0">
+            <div className="rounded-l flex items-center justify-center" style={{ height: '55px', overflow: 'hidden' }}>
+              <img className='h-auto dark:invert dark:brightness-200'
+                src="./assets/lucidence-logo-DNPRbMjo.png"
+                alt="Lucidence"
+                style={{ width: '180px', height: 'auto', objectFit: 'cover', objectPosition: 'center' }}
+              />
             </div>
-            <span className="text-xl font-display font-semibold text-foreground">Lucidence</span>
           </Link>
 
           {/* Center: Nav Links */}
@@ -425,11 +428,14 @@ export default function Index() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             {/* Brand */}
             <div>
-              <Link to="/" className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-primary-foreground" />
+              <Link to="/" className="flex items-center justify-center gap-2 mb-4">
+                <div className="rounded-l flex items-center justify-center" style={{ height: '55px', overflow: 'hidden' }}>
+                  <img className='h-auto dark:invert dark:brightness-200'
+                    src="./assets/lucidence-logo-DNPRbMjo.png"
+                    alt="Lucidence"
+                    style={{ width: '180px', height: 'auto', objectFit: 'cover', objectPosition: 'center' }}
+                  />
                 </div>
-                <span className="text-lg font-display font-semibold text-foreground">Lucidence</span>
               </Link>
               <p className="text-muted-foreground text-sm">{t('footer.desc')}</p>
             </div>
