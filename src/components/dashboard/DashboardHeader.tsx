@@ -15,6 +15,7 @@ const pageTitles: Record<DashboardPage, { title: string; subtitle: string }> = {
   appointments: { title: 'Appointments', subtitle: 'Manage patient bookings and schedules.' },
   patients: { title: 'Patients', subtitle: 'View and manage your patient records.' },
   reports: { title: 'Reports', subtitle: 'Analytics and insights for your practice.' },
+  feedback: { title: 'Feedback', subtitle: 'Customer feedback from your project.' },
   settings: { title: 'Settings', subtitle: 'Configure your preferences and account.' },
 };
 

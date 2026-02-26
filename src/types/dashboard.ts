@@ -54,4 +54,4 @@ export interface PatientRow {
   createdAt: Date;
 }
 
-export type DashboardPage = 'dashboard' | 'appointments' | 'patients' | 'reports' | 'settings';
+export type DashboardPage = 'dashboard' | 'appointments' | 'patients' | 'reports' | 'feedback' | 'settings';
