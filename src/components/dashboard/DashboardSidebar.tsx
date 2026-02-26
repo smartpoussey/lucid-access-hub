@@ -4,6 +4,7 @@ import {
   Calendar,
   Users,
   BarChart3,
+  MessageSquare,
   Settings,
   LogOut,
   ChevronLeft,
@@ -27,6 +28,7 @@ const navItems: { id: DashboardPage; label: string; icon: React.ElementType }[] 
   { id: 'appointments', label: 'Appointments', icon: Calendar },
   { id: 'patients', label: 'Patients', icon: Users },
   { id: 'reports', label: 'Reports', icon: BarChart3 },
+  { id: 'feedback', label: 'Feedback', icon: MessageSquare },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

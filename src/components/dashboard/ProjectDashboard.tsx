@@ -8,6 +8,7 @@ import { DashboardHome } from './pages/DashboardHome';
 import { AppointmentsPage } from './pages/AppointmentsPage';
 import { PatientsPage } from './pages/PatientsPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { FeedbackPage } from './pages/FeedbackPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import type { ClientProject } from '@/types';
@@ -33,6 +34,8 @@ export function ProjectDashboard({ project, onBack }: ProjectDashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [collections, setCollections] = useState<CollectionData[]>([]);
+  const [feedbackItems, setFeedbackItems] = useState<{ id: string; data: Record<string, unknown> }[]>([]);
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,18 +53,21 @@ export function ProjectDashboard({ project, onBack }: ProjectDashboardProps) {
       const contactsName = `${projectName}_Contacts`;
       const interactionsName = `${projectName}_Interactions`;
 
-      const [contactsDocs, interactionsDocs] = await Promise.all([
+      const [contactsDocs, interactionsDocs, feedbackDocs] = await Promise.all([
         getClientProjectCollectionDocs(project.clientProjectId, contactsName).catch(() => []),
         getClientProjectCollectionDocs(project.clientProjectId, interactionsName).catch(() => []),
+        getClientProjectCollectionDocs(project.clientProjectId, 'feedback').catch(() => []),
       ]);
 
       setCollections([
         { name: contactsName, documents: contactsDocs },
         { name: interactionsName, documents: interactionsDocs },
       ]);
+      setFeedbackItems(feedbackDocs);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load project data');
     } finally {
+      setIsLoadingFeedback(false);
       setIsLoading(false);
     }
   }, [project]);
@@ -123,6 +129,14 @@ export function ProjectDashboard({ project, onBack }: ProjectDashboardProps) {
             weeklyData={dashboardData.weeklyChartData}
             patientDistribution={dashboardData.patientDistribution}
             urgencyData={dashboardData.urgencyData}
+          />
+        );
+      case 'feedback':
+        return (
+          <FeedbackPage
+            feedbackItems={feedbackItems}
+            isLoading={isLoadingFeedback}
+            searchQuery={searchQuery}
           />
         );
       case 'settings':
