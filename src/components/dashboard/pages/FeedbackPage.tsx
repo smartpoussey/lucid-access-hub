@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { MessageSquare, Star, User, Calendar, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface FeedbackItem {
   id: string;
@@ -15,34 +16,27 @@ interface FeedbackPageProps {
 }
 
 export function FeedbackPage({ feedbackItems, isLoading, searchQuery }: FeedbackPageProps) {
+  const { t } = useLanguage();
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />
-        <span className="text-muted-foreground">Loading feedback...</span>
+        <span className="text-muted-foreground">{t('feedback.loading')}</span>
       </div>
     );
   }
 
   const filtered = searchQuery
-    ? feedbackItems.filter((item) => {
-        const str = JSON.stringify(item.data).toLowerCase();
-        return str.includes(searchQuery.toLowerCase());
-      })
+    ? feedbackItems.filter((item) => JSON.stringify(item.data).toLowerCase().includes(searchQuery.toLowerCase()))
     : feedbackItems;
 
   if (filtered.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center py-16"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center py-16">
         <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-lg font-medium text-foreground">No feedback found</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Feedback entries will appear here once submitted.
-        </p>
+        <p className="text-lg font-medium text-foreground">{t('feedback.noFeedback')}</p>
+        <p className="text-sm text-muted-foreground mt-1">{t('feedback.noFeedbackDesc')}</p>
       </motion.div>
     );
   }
@@ -66,15 +60,11 @@ export function FeedbackPage({ feedbackItems, isLoading, searchQuery }: Feedback
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Feedback</h2>
-          <p className="text-muted-foreground text-sm">{filtered.length} entries</p>
+          <h2 className="text-2xl font-bold text-foreground">{t('feedback.title')}</h2>
+          <p className="text-muted-foreground text-sm">{filtered.length} {t('feedback.entries')}</p>
         </div>
       </div>
 
@@ -94,18 +84,11 @@ export function FeedbackPage({ feedbackItems, isLoading, searchQuery }: Feedback
                 ? new Date((dateVal as any).seconds * 1000)
                 : new Date(dateVal as string | number);
               dateStr = ts.toLocaleDateString();
-            } catch {
-              dateStr = String(dateVal);
-            }
+            } catch { dateStr = String(dateVal); }
           }
 
           return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
+            <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
               <Card className="card-elevated h-full">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
@@ -118,28 +101,19 @@ export function FeedbackPage({ feedbackItems, isLoading, searchQuery }: Feedback
                         {email && <p className="text-xs text-muted-foreground truncate">{email}</p>}
                       </div>
                     </div>
-                    {sentiment && (
-                      <Badge variant={sentimentColor(sentiment) as any} className="text-xs flex-shrink-0">
-                        {sentiment}
-                      </Badge>
-                    )}
+                    {sentiment && <Badge variant={sentimentColor(sentiment) as any} className="text-xs flex-shrink-0">{sentiment}</Badge>}
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
                   {rating !== null && (
                     <div className="flex items-center gap-1">
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/30'}`}
-                        />
+                        <Star key={i} className={`h-4 w-4 ${i < rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/30'}`} />
                       ))}
                       <span className="text-xs text-muted-foreground ml-1">{rating}/5</span>
                     </div>
                   )}
-                  {message && (
-                    <p className="text-sm text-foreground line-clamp-4">{message}</p>
-                  )}
+                  {message && <p className="text-sm text-foreground line-clamp-4">{message}</p>}
                   {dateStr && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />

@@ -4,10 +4,12 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { SignupForm } from '@/components/auth/SignupForm';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Signup() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   if (isSubmitted) {
     return (
@@ -21,18 +23,25 @@ export default function Signup() {
             <CheckCircle className="h-10 w-10 text-success" />
           </div>
           <h1 className="text-2xl font-display font-bold text-foreground mb-4">
-            Application Submitted!
+            {t('signup.submitted.title')}
           </h1>
           <p className="text-muted-foreground mb-8">
-            Thank you for your interest in Lucidence. Our team will review your application and contact you within 24-48 hours.
+            {t('signup.submitted.desc')}
           </p>
           <Button onClick={() => navigate('/')} className="bg-primary text-primary-foreground">
-            Return to Home
+            {t('signup.submitted.cta')}
           </Button>
         </motion.div>
       </div>
     );
   }
+
+  const features = [
+    t('signup.feature1'),
+    t('signup.feature2'),
+    t('signup.feature3'),
+    t('signup.feature4'),
+  ];
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -51,27 +60,25 @@ export default function Signup() {
             transition={{ duration: 0.6 }}
           >
             <Link to="/" className="flex items-center gap-3 mb-12">
-              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center glow">
-                <span className="text-2xl font-display font-bold text-primary-foreground">L</span>
+              <div className="rounded-l flex items-center justify-center" style={{ height: '55px', overflow: 'hidden' }}>
+                <img className='h-auto dark:invert dark:brightness-200'
+                  src="./assets/lucidence-logo-DNPRbMjo.png"
+                  alt="Lucidence"
+                  style={{ width: '180px', height: 'auto', objectFit: 'cover', objectPosition: 'center' }}
+                />
               </div>
-              <span className="text-2xl font-display font-semibold text-foreground">Lucidence</span>
             </Link>
             
             <h1 className="text-3xl font-display font-bold text-foreground mb-6">
-              Join the future of<br />
-              <span className="text-gradient">AI-powered clinics</span>
+              {t('signup.brandHeadline')}<br />
+              <span className="text-gradient">{t('signup.brandHighlight')}</span>
             </h1>
             <p className="text-muted-foreground max-w-sm">
-              Apply to become a Lucidence partner and transform your practice with cutting-edge AI solutions.
+              {t('signup.brandDesc')}
             </p>
 
             <div className="mt-12 space-y-4">
-              {[
-                'Centralized authentication',
-                'Multi-project management',
-                'AI-powered dashboards',
-                'Dedicated support team',
-              ].map((feature, index) => (
+              {features.map((feature, index) => (
                 <motion.div
                   key={feature}
                   initial={{ opacity: 0, x: -20 }}
@@ -96,24 +103,24 @@ export default function Signup() {
             className="inline-flex items-center text-muted-foreground hover:text-foreground mb-8 transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to home
+            {t('signup.backToHome')}
           </Link>
 
           <div className="mb-8">
             <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
-              Create your application
+              {t('signup.title')}
             </h2>
             <p className="text-muted-foreground">
-              Fill out the form below and our team will get in touch.
+              {t('signup.subtitle')}
             </p>
           </div>
 
           <SignupForm onSuccess={() => setIsSubmitted(true)} />
 
           <p className="mt-8 text-center text-muted-foreground">
-            Already have an account?{' '}
+            {t('signup.alreadyAccount')}{' '}
             <Link to="/login" className="text-primary hover:text-primary/80 font-medium transition-colors">
-              Sign in
+              {t('signup.signIn')}
             </Link>
           </p>
         </div>

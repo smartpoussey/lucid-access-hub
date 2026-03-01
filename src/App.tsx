@@ -14,11 +14,14 @@ import Signup from "./pages/Signup";
 import Register from "./pages/Register";
 import RegisterRole from "./pages/RegisterRole";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminSettings from "./pages/admin/AdminSettings";
 import LeadsManagement from "./pages/admin/LeadsManagement";
 import UsersManagement from "./pages/admin/UsersManagement";
 import ProjectsManagement from "./pages/admin/ProjectsManagement";
 import StaffDashboard from "./pages/staff/StaffDashboard";
+import StaffSettings from "./pages/staff/StaffSettings";
 import ClientDashboard from "./pages/client/ClientDashboard";
+import ClientSettings from "./pages/client/ClientSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,15 +44,18 @@ const App = () => (
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<RoleGuard allowedRoles={['admin']}><AdminDashboard /></RoleGuard>} />
+                <Route path="/admin/settings" element={<RoleGuard allowedRoles={['admin']}><AdminSettings /></RoleGuard>} />
                 <Route path="/admin/leads" element={<RoleGuard allowedRoles={['admin']}><LeadsManagement /></RoleGuard>} />
                 <Route path="/admin/users" element={<RoleGuard allowedRoles={['admin']}><UsersManagement /></RoleGuard>} />
                 <Route path="/admin/projects" element={<RoleGuard allowedRoles={['admin']}><ProjectsManagement /></RoleGuard>} />
                 
                 {/* Staff Routes */}
                 <Route path="/staff" element={<RoleGuard allowedRoles={['staff']}><StaffDashboard /></RoleGuard>} />
+                <Route path="/staff/settings" element={<RoleGuard allowedRoles={['staff']}><StaffSettings /></RoleGuard>} />
                 
                 {/* Client Routes */}
                 <Route path="/client" element={<RoleGuard allowedRoles={['client']}><ClientDashboard /></RoleGuard>} />
+                <Route path="/client/settings" element={<RoleGuard allowedRoles={['client']}><ClientSettings /></RoleGuard>} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>

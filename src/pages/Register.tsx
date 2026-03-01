@@ -2,8 +2,17 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import { RegisterForm } from '@/components/auth/RegisterForm';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Register() {
+  const { t } = useLanguage();
+
+  const steps = [
+    t('register.step1'),
+    t('register.step2'),
+    t('register.step3'),
+  ];
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left side - decorative */}
@@ -19,10 +28,10 @@ export default function Register() {
             transition={{ delay: 0.2 }}
           >
             <h1 className="text-4xl font-display font-bold text-foreground mb-4">
-              Join Lucidence
+              {t('register.brandHeadline')}
             </h1>
             <p className="text-lg text-muted-foreground max-w-md">
-              Create your account to access powerful AI project management tools and collaborate with your team.
+              {t('register.brandDesc')}
             </p>
           </motion.div>
           
@@ -32,24 +41,14 @@ export default function Register() {
             transition={{ delay: 0.4 }}
             className="mt-12 space-y-4"
           >
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-primary font-semibold text-sm">1</span>
+            {steps.map((step, i) => (
+              <div key={i} className="flex items-center gap-3 text-muted-foreground">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary font-semibold text-sm">{i + 1}</span>
+                </div>
+                <span>{step}</span>
               </div>
-              <span>Create your unique username</span>
-            </div>
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-primary font-semibold text-sm">2</span>
-              </div>
-              <span>Verify your email address</span>
-            </div>
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-primary font-semibold text-sm">3</span>
-              </div>
-              <span>Start managing your projects</span>
-            </div>
+            ))}
           </motion.div>
         </div>
       </div>
@@ -62,7 +61,7 @@ export default function Register() {
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to home
+            {t('register.backToHome')}
           </Link>
         </div>
 
@@ -73,19 +72,19 @@ export default function Register() {
                 <UserPlus className="w-7 h-7 text-primary" />
               </div>
               <h2 className="text-2xl font-display font-bold text-foreground">
-                Create Account
+                {t('register.title')}
               </h2>
               <p className="text-muted-foreground mt-2">
-                Enter your details to register
+                {t('register.subtitle')}
               </p>
             </div>
 
             <RegisterForm />
 
             <p className="text-center text-sm text-muted-foreground mt-6">
-              Already have an account?{' '}
+              {t('register.alreadyAccount')}{' '}
               <Link to="/login" className="text-primary hover:underline font-medium">
-                Sign in
+                {t('register.signIn')}
               </Link>
             </p>
           </div>
