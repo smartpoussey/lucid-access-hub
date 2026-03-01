@@ -6,92 +6,76 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function SettingsPage() {
+  const { t } = useLanguage();
+
   return (
     <div className="space-y-6 max-w-3xl">
-      {/* Profile Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
-              Profile Settings
+              {t('settings.profile')}
             </CardTitle>
-            <CardDescription>
-              Manage your account information
-            </CardDescription>
+            <CardDescription>{t('settings.profileDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">{t('settings.firstName')}</Label>
                 <Input id="firstName" placeholder="John" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">{t('settings.lastName')}</Label>
                 <Input id="lastName" placeholder="Doe" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('settings.email')}</Label>
               <Input id="email" type="email" placeholder="john@example.com" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" />
+              <Label htmlFor="phone">{t('settings.phone')}</Label>
+              <Input id="phone" type="tel" placeholder="+49 69 123 456 78" />
             </div>
-            <Button className="mt-2">Save Changes</Button>
+            <Button className="mt-2">{t('settings.saveChanges')}</Button>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Notifications Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Bell className="h-5 w-5 text-primary" />
-              Notification Preferences
+              {t('settings.notifications')}
             </CardTitle>
-            <CardDescription>
-              Configure how you receive notifications
-            </CardDescription>
+            <CardDescription>{t('settings.notificationsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-sm font-medium">Email Notifications</Label>
-                <p className="text-xs text-muted-foreground">
-                  Receive email alerts for new appointments
-                </p>
+                <Label className="text-sm font-medium">{t('settings.emailNotif')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.emailNotifDesc')}</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-sm font-medium">SMS Notifications</Label>
-                <p className="text-xs text-muted-foreground">
-                  Get SMS reminders for upcoming appointments
-                </p>
+                <Label className="text-sm font-medium">{t('settings.smsNotif')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.smsNotifDesc')}</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-sm font-medium">Push Notifications</Label>
-                <p className="text-xs text-muted-foreground">
-                  Browser push notifications for real-time updates
-                </p>
+                <Label className="text-sm font-medium">{t('settings.pushNotif')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.pushNotifDesc')}</p>
               </div>
               <Switch />
             </div>
@@ -99,77 +83,57 @@ export function SettingsPage() {
         </Card>
       </motion.div>
 
-      {/* Security Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              Security
+              {t('settings.security')}
             </CardTitle>
-            <CardDescription>
-              Manage your security settings
-            </CardDescription>
+            <CardDescription>{t('settings.securityDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-sm font-medium">Two-Factor Authentication</Label>
-                <p className="text-xs text-muted-foreground">
-                  Add an extra layer of security to your account
-                </p>
+                <Label className="text-sm font-medium">{t('settings.twoFactor')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.twoFactorDesc')}</p>
               </div>
               <Switch />
             </div>
             <Separator />
             <div className="space-y-2">
-              <Label>Change Password</Label>
+              <Label>{t('settings.changePassword')}</Label>
               <div className="flex gap-2">
-                <Input type="password" placeholder="New password" className="flex-1" />
-                <Button variant="outline">Update</Button>
+                <Input type="password" placeholder={t('settings.newPassword')} className="flex-1" />
+                <Button variant="outline">{t('settings.update')}</Button>
               </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Appearance Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Palette className="h-5 w-5 text-primary" />
-              Appearance
+              {t('settings.appearance')}
             </CardTitle>
-            <CardDescription>
-              Customize the look and feel
-            </CardDescription>
+            <CardDescription>{t('settings.appearanceDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-sm font-medium">Dark Mode</Label>
-                <p className="text-xs text-muted-foreground">
-                  Switch between light and dark themes
-                </p>
+                <Label className="text-sm font-medium">{t('settings.darkMode')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.darkModeDesc')}</p>
               </div>
               <Switch />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-sm font-medium">Compact View</Label>
-                <p className="text-xs text-muted-foreground">
-                  Show more content with less spacing
-                </p>
+                <Label className="text-sm font-medium">{t('settings.compactView')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.compactViewDesc')}</p>
               </div>
               <Switch />
             </div>

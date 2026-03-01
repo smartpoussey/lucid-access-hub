@@ -2,24 +2,15 @@ import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard,
-  Users,
-  UserPlus,
-  FolderKanban,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  ChevronDown,
+  LayoutDashboard, Users, UserPlus, FolderKanban, Settings,
+  LogOut, Menu, X, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -28,34 +19,35 @@ interface DashboardLayoutProps {
 }
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   icon: ReactNode;
   href: string;
 }
 
 const adminNavItems: NavItem[] = [
-  { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: '/admin' },
-  { label: 'Leads', icon: <UserPlus className="h-5 w-5" />, href: '/admin/leads' },
-  { label: 'Users', icon: <Users className="h-5 w-5" />, href: '/admin/users' },
-  { label: 'Projects', icon: <FolderKanban className="h-5 w-5" />, href: '/admin/projects' },
-  { label: 'Settings', icon: <Settings className="h-5 w-5" />, href: '/admin/settings' },
+  { labelKey: 'layout.dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: '/admin' },
+  { labelKey: 'layout.leads', icon: <UserPlus className="h-5 w-5" />, href: '/admin/leads' },
+  { labelKey: 'layout.users', icon: <Users className="h-5 w-5" />, href: '/admin/users' },
+  { labelKey: 'layout.projects', icon: <FolderKanban className="h-5 w-5" />, href: '/admin/projects' },
+  { labelKey: 'layout.settings', icon: <Settings className="h-5 w-5" />, href: '/admin/settings' },
 ];
 
 const staffNavItems: NavItem[] = [
-  { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: '/staff' },
-  { label: 'My Projects', icon: <FolderKanban className="h-5 w-5" />, href: '/staff/projects' },
-  { label: 'Settings', icon: <Settings className="h-5 w-5" />, href: '/staff/settings' },
+  { labelKey: 'layout.dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: '/staff' },
+  { labelKey: 'layout.myProjects', icon: <FolderKanban className="h-5 w-5" />, href: '/staff/projects' },
+  { labelKey: 'layout.settings', icon: <Settings className="h-5 w-5" />, href: '/staff/settings' },
 ];
 
 const clientNavItems: NavItem[] = [
-  { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: '/client' },
-  { label: 'My Projects', icon: <FolderKanban className="h-5 w-5" />, href: '/client/projects' },
-  { label: 'Settings', icon: <Settings className="h-5 w-5" />, href: '/client/settings' },
+  { labelKey: 'layout.dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: '/client' },
+  { labelKey: 'layout.myProjects', icon: <FolderKanban className="h-5 w-5" />, href: '/client/projects' },
+  { labelKey: 'layout.settings', icon: <Settings className="h-5 w-5" />, href: '/client/settings' },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -81,10 +73,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <aside className="hidden lg:flex flex-col w-64 border-r border-border bg-sidebar">
         <div className="p-6 border-b border-sidebar-border">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
-              <span className="text-lg font-display font-bold text-sidebar-primary-foreground">L</span>
+            <div className="rounded-l flex items-center justify-center" style={{ height: '40px', overflow: 'hidden' }}>
+              <img className='h-auto dark:invert dark:brightness-200'
+                src="./assets/lucidence-logo-DNPRbMjo.png"
+                alt="Lucidence"
+                style={{ width: '140px', height: 'auto', objectFit: 'cover', objectPosition: 'center' }}
+              />
             </div>
-            <span className="text-xl font-display font-semibold text-sidebar-foreground">Lucidence</span>
           </Link>
         </div>
 
@@ -104,7 +99,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <span className={isActive ? 'text-sidebar-primary' : ''}>
                   {item.icon}
                 </span>
-                <span className="font-medium">{item.label}</span>
+                <span className="font-medium">{t(item.labelKey)}</span>
               </Link>
             );
           })}
@@ -120,12 +115,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-sidebar-foreground truncate">
-                    {user?.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {user?.role}
-                  </p>
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.role}</p>
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -133,12 +124,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
-                Settings
+                {t('layout.settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
-                Log out
+                {t('layout.logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -165,10 +156,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
                 <Link to="/" className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
-                    <span className="text-lg font-display font-bold text-sidebar-primary-foreground">L</span>
+                  <div className="rounded-l flex items-center justify-center" style={{ height: '40px', overflow: 'hidden' }}>
+                    <img className='h-auto dark:invert dark:brightness-200'
+                      src="./assets/lucidence-logo-DNPRbMjo.png"
+                      alt="Lucidence"
+                      style={{ width: '140px', height: 'auto', objectFit: 'cover', objectPosition: 'center' }}
+                    />
                   </div>
-                  <span className="text-xl font-display font-semibold text-sidebar-foreground">Lucidence</span>
                 </Link>
                 <button onClick={() => setSidebarOpen(false)}>
                   <X className="h-6 w-6 text-sidebar-foreground" />
@@ -192,7 +186,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <span className={isActive ? 'text-sidebar-primary' : ''}>
                         {item.icon}
                       </span>
-                      <span className="font-medium">{item.label}</span>
+                      <span className="font-medium">{t(item.labelKey)}</span>
                     </Link>
                   );
                 })}
@@ -204,7 +198,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
                 >
                   <LogOut className="h-5 w-5" />
-                  <span className="font-medium">Log out</span>
+                  <span className="font-medium">{t('layout.logout')}</span>
                 </button>
               </div>
             </motion.aside>
@@ -221,10 +215,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Menu className="h-6 w-6 text-foreground" />
             </button>
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-sm font-display font-bold text-primary-foreground">L</span>
+              <div className="rounded-l flex items-center justify-center" style={{ height: '32px', overflow: 'hidden' }}>
+                <img className='h-auto dark:invert dark:brightness-200'
+                  src="./assets/lucidence-logo-DNPRbMjo.png"
+                  alt="Lucidence"
+                  style={{ width: '100px', height: 'auto', objectFit: 'cover', objectPosition: 'center' }}
+                />
               </div>
-              <span className="text-lg font-display font-semibold text-foreground">Lucidence</span>
             </Link>
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-primary-foreground text-xs">

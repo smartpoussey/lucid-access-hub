@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Login() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left side - Branding */}
@@ -21,18 +24,21 @@ export default function Login() {
             transition={{ duration: 0.6 }}
           >
             <Link to="/" className="flex items-center gap-3 mb-12">
-              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center glow">
-                <span className="text-2xl font-display font-bold text-primary-foreground">L</span>
+              <div className="rounded-l flex items-center justify-center" style={{ height: '55px', overflow: 'hidden' }}>
+                <img className='h-auto dark:invert dark:brightness-200'
+                  src="./assets/lucidence-logo-DNPRbMjo.png"
+                  alt="Lucidence"
+                  style={{ width: '180px', height: 'auto', objectFit: 'cover', objectPosition: 'center' }}
+                />
               </div>
-              <span className="text-2xl font-display font-semibold text-foreground">Lucidence</span>
             </Link>
             
             <h1 className="text-4xl font-display font-bold text-foreground mb-6">
-              Welcome back to the<br />
-              <span className="text-gradient">AI Platform</span>
+              {t('login.brandHeadline')}<br />
+              <span className="text-gradient">{t('login.brandHighlight')}</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-md">
-              Access your centralized authentication hub and manage your AI projects with confidence.
+              {t('login.brandDesc')}
             </p>
           </motion.div>
         </div>
@@ -46,15 +52,15 @@ export default function Login() {
             className="inline-flex items-center text-muted-foreground hover:text-foreground mb-8 transition-colors lg:hidden"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to home
+            {t('login.backToHome')}
           </Link>
 
           <div className="mb-8">
             <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
-              Sign in to your account
+              {t('login.title')}
             </h2>
             <p className="text-muted-foreground">
-              Enter your credentials to access your dashboard.
+              {t('login.subtitle')}
             </p>
           </div>
 
@@ -62,15 +68,15 @@ export default function Login() {
 
           <div className="mt-8 space-y-4 text-center">
             <p className="text-muted-foreground">
-              Don't have an account?{' '}
+              {t('login.noAccount')}{' '}
               <Link to="/signup" className="text-primary hover:text-primary/80 font-medium transition-colors">
-                Apply as a lead
+                {t('login.applyLead')}
               </Link>
             </p>
             <p className="text-muted-foreground">
-              Need to register?{' '}
+              {t('login.needRegister')}{' '}
               <Link to="/register" className="text-primary hover:text-primary/80 font-medium transition-colors">
-                Create account
+                {t('login.createAccount')}
               </Link>
             </p>
           </div>

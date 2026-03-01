@@ -1,17 +1,11 @@
 import { motion } from 'framer-motion';
 import {
-  LayoutDashboard,
-  Calendar,
-  Users,
-  BarChart3,
-  MessageSquare,
-  Settings,
-  LogOut,
-  ChevronLeft,
-  Stethoscope,
+  LayoutDashboard, Calendar, Users, BarChart3, MessageSquare,
+  Settings, LogOut, ChevronLeft, Stethoscope,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { DashboardPage } from '@/types/dashboard';
 
 interface DashboardSidebarProps {
@@ -23,23 +17,20 @@ interface DashboardSidebarProps {
   onToggleCollapse?: () => void;
 }
 
-const navItems: { id: DashboardPage; label: string; icon: React.ElementType }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'appointments', label: 'Appointments', icon: Calendar },
-  { id: 'patients', label: 'Patients', icon: Users },
-  { id: 'reports', label: 'Reports', icon: BarChart3 },
-  { id: 'feedback', label: 'Feedback', icon: MessageSquare },
-  { id: 'settings', label: 'Settings', icon: Settings },
-];
-
 export function DashboardSidebar({
-  currentPage,
-  onNavigate,
-  onBack,
-  projectName,
-  collapsed = false,
-  onToggleCollapse,
+  currentPage, onNavigate, onBack, projectName, collapsed = false, onToggleCollapse,
 }: DashboardSidebarProps) {
+  const { t } = useLanguage();
+
+  const navItems: { id: DashboardPage; labelKey: string; icon: React.ElementType }[] = [
+    { id: 'dashboard', labelKey: 'projDash.dashboard', icon: LayoutDashboard },
+    { id: 'appointments', labelKey: 'projDash.appointments', icon: Calendar },
+    { id: 'patients', labelKey: 'projDash.patients', icon: Users },
+    { id: 'reports', labelKey: 'projDash.reports', icon: BarChart3 },
+    { id: 'feedback', labelKey: 'projDash.feedback', icon: MessageSquare },
+    { id: 'settings', labelKey: 'projDash.settings', icon: Settings },
+  ];
+
   return (
     <motion.aside
       initial={{ x: -20, opacity: 0 }}
@@ -49,32 +40,23 @@ export function DashboardSidebar({
         collapsed ? 'w-16' : 'w-64'
       )}
     >
-      {/* Logo/Header */}
       <div className="p-4 border-b border-sidebar-border flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
           <Stethoscope className="h-5 w-5 text-primary" />
         </div>
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-sm text-sidebar-foreground truncate">
-              {projectName}
-            </h2>
-            <p className="text-xs text-muted-foreground">Doctor Panel</p>
+            <h2 className="font-semibold text-sm text-sidebar-foreground truncate">{projectName}</h2>
+            <p className="text-xs text-muted-foreground">{t('projDash.doctorPanel')}</p>
           </div>
         )}
         {onToggleCollapse && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 ml-auto"
-            onClick={onToggleCollapse}
-          >
+          <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto" onClick={onToggleCollapse}>
             <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
           </Button>
         )}
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -91,13 +73,12 @@ export function DashboardSidebar({
               )}
             >
               <Icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && <span>{t(item.labelKey)}</span>}
             </button>
           );
         })}
       </nav>
 
-      {/* Logout / Back */}
       <div className="p-3 border-t border-sidebar-border space-y-2">
         <button
           onClick={onBack}
@@ -107,7 +88,7 @@ export function DashboardSidebar({
           )}
         >
           <LogOut className="h-5 w-5 flex-shrink-0" />
-          {!collapsed && <span>Exit Project</span>}
+          {!collapsed && <span>{t('projDash.exitProject')}</span>}
         </button>
       </div>
     </motion.aside>
